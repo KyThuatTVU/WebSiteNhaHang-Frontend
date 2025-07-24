@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Access - QR Code</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .qr-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            display: inline-block;
+            margin: 20px 0;
+        }
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            border: 2px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #666;
+            background: #f9f9f9;
+        }
+        .url-display {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            word-break: break-all;
+            font-family: monospace;
+        }
+        .mobile-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .mobile-link {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .mobile-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        .mobile-link h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+        .mobile-link p {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online { background-color: #4CAF50; }
+        .status-offline { background-color: #f44336; }
+        .status-unknown { background-color: #ff9800; }
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: all 0.3s ease;
+        }
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        @media (max-width: 600px) {
+            .mobile-links {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Mobile Access - Nhà Hàng Phương Nam</h1>
+        <p>Quét mã QR hoặc nhấp vào liên kết để truy cập phiên bản mobile</p>
+        
+        <div class="qr-container">
+            <div id="qrCode" class="qr-code">
+                Đang tạo QR Code...
+            </div>
+        </div>
+        
+        <div class="url-display">
+            <strong>URL hiện tại:</strong> <span id="currentUrl"></span>
+            <button class="copy-btn" onclick="copyUrl()">📋 Copy</button>
+        </div>
+        
+        <div id="connectionStatus">
+            <span class="status-indicator status-unknown"></span>
+            Đang kiểm tra kết nối API...
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔗 Liên kết trực tiếp</h2>
+        <div class="mobile-links">
+            <a href="mobile-Index-new.html" class="mobile-link" target="_blank">
+                <h3>🏠 Trang chủ Mobile</h3>
+                <p>Giao diện chính cho điện thoại</p>
+            </a>
+            <a href="mobile-Menu-new.html" class="mobile-link" target="_blank">
+                <h3>🍽️ Menu Mobile</h3>
+                <p>Xem thực đơn trên điện thoại</p>
+            </a>
+            <a href="mobile-thanhtoan.html" class="mobile-link" target="_blank">
+                <h3>💳 Thanh toán Mobile</h3>
+                <p>Giỏ hàng và thanh toán</p>
+            </a>
+            <a href="test-api-config.html" class="mobile-link" target="_blank">
+                <h3>🔧 Test API</h3>
+                <p>Kiểm tra cấu hình API</p>
+            </a>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h3>📋 Hướng dẫn sử dụng:</h3>
+        <ol>
+            <li><strong>Từ PC:</strong> Mở trang này và quét QR code bằng điện thoại</li>
+            <li><strong>Từ Mobile:</strong> Nhấp trực tiếp vào các liên kết ở trên</li>
+            <li><strong>Kiểm tra API:</strong> Sử dụng trang "Test API" để kiểm tra kết nối</li>
+            <li><strong>Debug:</strong> Mở Developer Console để xem logs chi tiết</li>
+        </ol>
+        
+        <h3>🔍 Troubleshooting:</h3>
+        <ul>
+            <li>Nếu không có dữ liệu: Kiểm tra kết nối internet và API status</li>
+            <li>Nếu hình ảnh không hiển thị: Kiểm tra URL cấu hình trong config.js</li>
+            <li>Nếu chatbot không hoạt động: Kiểm tra API endpoint trong console</li>
+        </ul>
+    </div>
+
+    <!-- Include config for API testing -->
+    <script src="js/config.js"></script>
+    <script>
+        // Display current URL
+        document.getElementById('currentUrl').textContent = window.location.href;
+        
+        // Generate QR Code (simple text-based for now)
+        function generateQRCode() {
+            const qrContainer = document.getElementById('qrCode');
+            const url = window.location.origin + '/mobile-Index-new.html';
+            
+            // For a real implementation, you'd use a QR code library
+            // For now, we'll show the URL
+            qrContainer.innerHTML = `
+                <div style="padding: 20px; text-align: center;">
+                    <div style="font-size: 12px; margin-bottom: 10px;">Quét để truy cập:</div>
+                    <div style="font-weight: bold; color: #333;">${url}</div>
+                    <div style="font-size: 10px; margin-top: 10px; color: #666;">
+                        (Sử dụng camera điện thoại hoặc app QR scanner)
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Copy URL to clipboard
+        function copyUrl() {
+            const url = document.getElementById('currentUrl').textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('✅ Đã copy URL vào clipboard!');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = url;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('✅ Đã copy URL vào clipboard!');
+            });
+        }
+        
+        // Check API connection status
+        async function checkAPIStatus() {
+            const statusElement = document.getElementById('connectionStatus');
+            
+            try {
+                if (window.appConfig) {
+                    const isConnected = await window.appConfig.testConnection();
+                    if (isConnected) {
+                        statusElement.innerHTML = '<span class="status-indicator status-online"></span>API kết nối thành công ✅';
+                    } else {
+                        statusElement.innerHTML = '<span class="status-indicator status-offline"></span>API không thể kết nối ❌';
+                    }
+                } else {
+                    statusElement.innerHTML = '<span class="status-indicator status-offline"></span>Cấu hình chưa được tải ⚠️';
+                }
+            } catch (error) {
+                statusElement.innerHTML = '<span class="status-indicator status-offline"></span>Lỗi kiểm tra API: ' + error.message;
+            }
+        }
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            generateQRCode();
+            
+            // Wait for config to load then check API
+            setTimeout(checkAPIStatus, 1000);
+            
+            // Show current environment info
+            setTimeout(() => {
+                if (window.appConfig) {
+                    const settings = window.appConfig.getSettings();
+                    console.log('🔧 Environment Info:', settings);
+                    console.log('📱 Mobile URLs:', {
+                        home: window.location.origin + '/mobile-Index-new.html',
+                        menu: window.location.origin + '/mobile-Menu-new.html',
+                        payment: window.location.origin + '/mobile-thanhtoan.html'
+                    });
+                }
+            }, 500);
+        });
+        
+        // Auto-refresh API status every 30 seconds
+        setInterval(checkAPIStatus, 30000);
+    </script>
+</body>
+</html>

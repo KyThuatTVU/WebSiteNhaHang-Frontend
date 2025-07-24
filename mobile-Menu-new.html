@@ -173,6 +173,7 @@
 
     <!-- JavaScript -->
     <script src="js/config.js"></script>
+    <script src="js/menu-api.js"></script>
     <script src="js/mobile-utils.js"></script>
     
     
@@ -214,7 +215,7 @@
             }, 300);
         }
 
-        function loadMenuItems() {
+        async function loadMenuItems() {
             const menuGrid = document.getElementById('menuItemsGrid');
             const skeleton = document.getElementById('menuLoadingSkeleton');
 
@@ -222,66 +223,76 @@
             skeleton.classList.remove('mobile-hidden');
             menuGrid.classList.add('mobile-hidden');
 
-            // Sample menu data (in real app, this would come from API)
-            const menuItems = [
-                {
-                    id: 'pho-bo',
-                    name: 'Phở Bò',
-                    description: 'Phở bò truyền thống với nước dùng đậm đà',
-                    price: 85000,
-                    image: 'img/pho-bo.jpg',
-                    category: 'pho',
-                    popular: true
-                },
-                {
-                    id: 'pho-ga',
-                    name: 'Phở Gà',
-                    description: 'Phở gà thơm ngon với thịt gà tươi',
-                    price: 75000,
-                    image: 'img/pho-ga.jpg',
-                    category: 'pho'
-                },
-                {
-                    id: 'com-tam',
-                    name: 'Cơm Tấm',
-                    description: 'Cơm tấm sườn nướng đặc biệt',
-                    price: 75000,
-                    image: 'img/com-tam.jpg',
-                    category: 'com',
-                    isNew: true
-                },
-                {
-                    id: 'com-ga',
-                    name: 'Cơm Gà',
-                    description: 'Cơm gà nướng mật ong thơm lừng',
-                    price: 70000,
-                    image: 'img/com-ga.jpg',
-                    category: 'com'
-                },
-                {
-                    id: 'banh-mi',
-                    name: 'Bánh Mì',
-                    description: 'Bánh mì thịt nướng đặc biệt',
-                    price: 25000,
-                    image: 'img/banh-mi.jpg',
-                    category: 'nuong'
-                },
-                {
-                    id: 'tra-da',
-                    name: 'Trà Đá',
-                    description: 'Trà đá mát lạnh giải khát',
-                    price: 10000,
-                    image: 'img/tra-da.jpg',
-                    category: 'nuoc'
-                }
-            ];
+            try {
+                // Initialize API service
+                const apiService = new MenuAPIService();
+                console.log('🔄 Loading menu items from API...');
 
-            // Simulate loading delay
-            setTimeout(() => {
+                // Load menu data from API
+                const response = await apiService.searchFoods({ limit: 50 });
+
+                if (response.success && response.data) {
+                    console.log('✅ Menu data loaded:', response.data.length, 'items');
+
+                    // Format data for mobile display
+                    const menuItems = response.data.map(item => {
+                        const formattedItem = apiService.formatFoodItem(item);
+                        return {
+                            id: formattedItem.id,
+                            name: formattedItem.name,
+                            description: formattedItem.description,
+                            price: formattedItem.price,
+                            priceFormatted: formattedItem.priceFormatted,
+                            image: formattedItem.image,
+                            category: formattedItem.category,
+                            isAvailable: formattedItem.isAvailable,
+                            stock: formattedItem.stock,
+                            popular: formattedItem.stock > 15, // Mark as popular if stock > 15
+                            isNew: formattedItem.stock > 20 // Mark as new if stock > 20
+                        };
+                    });
+
+                    renderMenuItems(menuItems);
+                    showToast(`Đã tải ${menuItems.length} món ăn`, 'success');
+                } else {
+                    throw new Error('Invalid API response');
+                }
+            } catch (error) {
+                console.error('❌ Error loading menu:', error);
+                showToast('Không thể tải menu. Sử dụng dữ liệu offline.', 'warning');
+
+                // Use fallback data
+                const fallbackItems = [
+                    {
+                        id: 'pho-bo',
+                        name: 'Phở Bò',
+                        description: 'Phở bò truyền thống với nước dùng đậm đà',
+                        price: 85000,
+                        priceFormatted: '85.000đ',
+                        image: 'img/pho-bo.jpg',
+                        category: 'pho',
+                        popular: true,
+                        isAvailable: true
+                    },
+                    {
+                        id: 'com-tam',
+                        name: 'Cơm Tấm',
+                        description: 'Cơm tấm sườn nướng đặc biệt',
+                        price: 75000,
+                        priceFormatted: '75.000đ',
+                        image: 'img/comtam.webp',
+                        category: 'com',
+                        isNew: true,
+                        isAvailable: true
+                    }
+                ];
+
+                renderMenuItems(fallbackItems);
+            } finally {
+                // Hide loading skeleton
                 skeleton.classList.add('mobile-hidden');
                 menuGrid.classList.remove('mobile-hidden');
-                renderMenuItems(menuItems);
-            }, 1000);
+            }
         }
 
         function renderMenuItems(items) {
@@ -293,24 +304,30 @@
                 itemElement.className = 'mobile-card mobile-transition';
                 itemElement.style.animationDelay = `${index * 0.1}s`;
 
+                const isAvailable = item.isAvailable !== false;
+                const priceDisplay = item.priceFormatted || formatPrice(item.price);
+
                 itemElement.innerHTML = `
-                    <div class="mobile-relative">
+                    <div class="mobile-relative ${!isAvailable ? 'mobile-opacity-60' : ''}">
                         <img src="${item.image}" alt="${item.name}" class="mobile-w-full mobile-rounded-lg"
                              style="height: 140px; object-fit: cover;"
                              onerror="this.src='img/default-food.jpg'">
                         ${item.popular ? '<div class="mobile-absolute mobile-top-0 mobile-right-0 mobile-m-sm"><span class="mobile-badge mobile-badge-success mobile-animate-pulse">Phổ biến</span></div>' : ''}
                         ${item.isNew ? '<div class="mobile-absolute mobile-top-0 mobile-right-0 mobile-m-sm"><span class="mobile-badge mobile-badge-warning mobile-animate-pulse">Mới</span></div>' : ''}
+                        ${!isAvailable ? '<div class="mobile-absolute mobile-top-0 mobile-left-0 mobile-m-sm"><span class="mobile-badge mobile-badge-error">Hết hàng</span></div>' : ''}
                         <div class="mobile-absolute mobile-bottom-0 mobile-left-0 mobile-right-0 mobile-text-white mobile-p-sm mobile-rounded-b-lg"
                              style="background: linear-gradient(transparent, rgba(0,0,0,0.8));">
                             <div class="mobile-flex mobile-justify-between mobile-items-center">
                                 <div class="mobile-flex-1">
                                     <h4 class="mobile-font-semibold mobile-text-sm mobile-mb-xs">${item.name}</h4>
                                     <p class="mobile-text-xs mobile-opacity-80 mobile-mb-sm">${item.description}</p>
-                                    <div class="mobile-text-warning mobile-font-bold mobile-text-sm">${formatPrice(item.price)}</div>
+                                    <div class="mobile-text-warning mobile-font-bold mobile-text-sm">${priceDisplay}</div>
+                                    ${item.stock ? `<div class="mobile-text-xs mobile-opacity-70">Còn ${item.stock} phần</div>` : ''}
                                 </div>
-                                <button class="mobile-btn-icon mobile-btn-sm mobile-bg-white mobile-text-primary mobile-ml-sm"
-                                        onclick="addToCart('${item.id}', '${item.name}', ${item.price}); showToast('Đã thêm ${item.name} vào giỏ hàng!', 'success'); vibrate([50]);">
-                                    <i class="fas fa-plus"></i>
+                                <button class="mobile-btn-icon mobile-btn-sm mobile-bg-white mobile-text-primary mobile-ml-sm ${!isAvailable ? 'mobile-opacity-50' : ''}"
+                                        onclick="${isAvailable ? `addToCart('${item.id}', '${item.name}', ${item.price}); showToast('Đã thêm ${item.name} vào giỏ hàng!', 'success'); vibrate([50]);` : `showToast('${item.name} hiện đã hết hàng', 'error');`}"
+                                        ${!isAvailable ? 'disabled' : ''}>
+                                    <i class="fas fa-${isAvailable ? 'plus' : 'times'}"></i>
                                 </button>
                             </div>
                         </div>

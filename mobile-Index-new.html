@@ -126,50 +126,20 @@
                     <i class="fas fa-star mobile-mr-sm mobile-text-warning"></i>
                     Món Ăn Nổi Bật
                 </h3>
-                <div class="mobile-grid mobile-grid-cols-2" style="gap: 1rem;">
-                    <div class="mobile-card mobile-transition" onclick="showToast('Đã thêm Phở Bò vào giỏ hàng!', 'success'); vibrate([50]);">
-                        <div class="mobile-relative">
-                            <img src="img/pho-bo.jpg" alt="Phở Bò" class="mobile-w-full mobile-rounded-lg" style="height: 120px; object-fit: cover;" onerror="this.src='img/default-food.jpg'">
-                            <div class="mobile-absolute mobile-top-0 mobile-right-0 mobile-m-sm">
-                                <span class="mobile-badge mobile-badge-success mobile-animate-pulse">Phổ biến</span>
-                            </div>
-                            <div class="mobile-absolute mobile-bottom-0 mobile-left-0 mobile-right-0 mobile-bg-gradient-primary mobile-text-white mobile-p-sm mobile-rounded-b-lg" style="background: linear-gradient(transparent, rgba(0,0,0,0.7));">
-                                <div class="mobile-flex mobile-justify-between mobile-items-center">
-                                    <div>
-                                        <h4 class="mobile-font-semibold mobile-text-sm">Phở Bò</h4>
-                                        <p class="mobile-text-xs mobile-opacity-80">Nước dùng đậm đà</p>
-                                    </div>
-                                    <div class="mobile-text-right">
-                                        <div class="mobile-text-warning mobile-font-bold mobile-text-sm">85.000đ</div>
-                                        <button class="mobile-btn-icon mobile-btn-sm mobile-bg-white mobile-text-primary mobile-mt-xs" onclick="event.stopPropagation(); addToCart('pho-bo');">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                <div id="featuredItemsGrid" class="mobile-grid mobile-grid-cols-2" style="gap: 1rem;">
+                    <!-- Featured items will be loaded here -->
+                    <div class="mobile-card mobile-animate-pulse">
+                        <div class="mobile-bg-gray-200 mobile-rounded-lg" style="height: 120px;"></div>
+                        <div class="mobile-p-sm">
+                            <div class="mobile-bg-gray-200 mobile-rounded mobile-h-4 mobile-mb-sm"></div>
+                            <div class="mobile-bg-gray-200 mobile-rounded mobile-h-3"></div>
                         </div>
                     </div>
-
-                    <div class="mobile-card mobile-transition" onclick="showToast('Đã thêm Cơm Tấm vào giỏ hàng!', 'success'); vibrate([50]);">
-                        <div class="mobile-relative">
-                            <img src="img/com-tam.jpg" alt="Cơm Tấm" class="mobile-w-full mobile-rounded-lg" style="height: 120px; object-fit: cover;" onerror="this.src='img/default-food.jpg'">
-                            <div class="mobile-absolute mobile-top-0 mobile-right-0 mobile-m-sm">
-                                <span class="mobile-badge mobile-badge-warning mobile-animate-pulse">Mới</span>
-                            </div>
-                            <div class="mobile-absolute mobile-bottom-0 mobile-left-0 mobile-right-0 mobile-bg-gradient-primary mobile-text-white mobile-p-sm mobile-rounded-b-lg" style="background: linear-gradient(transparent, rgba(0,0,0,0.7));">
-                                <div class="mobile-flex mobile-justify-between mobile-items-center">
-                                    <div>
-                                        <h4 class="mobile-font-semibold mobile-text-sm">Cơm Tấm</h4>
-                                        <p class="mobile-text-xs mobile-opacity-80">Sườn nướng đặc biệt</p>
-                                    </div>
-                                    <div class="mobile-text-right">
-                                        <div class="mobile-text-warning mobile-font-bold mobile-text-sm">75.000đ</div>
-                                        <button class="mobile-btn-icon mobile-btn-sm mobile-bg-white mobile-text-primary mobile-mt-xs" onclick="event.stopPropagation(); addToCart('com-tam');">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="mobile-card mobile-animate-pulse">
+                        <div class="mobile-bg-gray-200 mobile-rounded-lg" style="height: 120px;"></div>
+                        <div class="mobile-p-sm">
+                            <div class="mobile-bg-gray-200 mobile-rounded mobile-h-4 mobile-mb-sm"></div>
+                            <div class="mobile-bg-gray-200 mobile-rounded mobile-h-3"></div>
                         </div>
                     </div>
                 </div>
@@ -253,6 +223,7 @@
 
     <!-- JavaScript -->
     <script src="js/config.js"></script>
+    <script src="js/menu-api.js"></script>
     <script src="js/mobile-utils.js"></script>
     
     
@@ -261,15 +232,18 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize mobile features
             initializeMobileFeatures();
-            
+
             // Update user info
             updateMobileUserInfo();
-            
+
             // Update cart badge
             updateMobileCartBadge();
-            
+
             // Set active navigation
             setActiveMobileNav();
+
+            // Load featured items from API
+            loadFeaturedItems();
         });
 
         function initializeMobileFeatures() {
@@ -499,6 +473,112 @@
             } else {
                 history.back();
             }
+        }
+
+        // Load featured items from API
+        async function loadFeaturedItems() {
+            const grid = document.getElementById('featuredItemsGrid');
+
+            try {
+                const apiService = new MenuAPIService();
+                console.log('🔄 Loading featured items...');
+
+                const response = await apiService.searchFoods({ limit: 4 });
+
+                if (response.success && response.data && response.data.length > 0) {
+                    const featuredItems = response.data.slice(0, 2).map(item => {
+                        const formatted = apiService.formatFoodItem(item);
+                        return {
+                            id: formatted.id,
+                            name: formatted.name,
+                            description: formatted.description.substring(0, 30) + '...',
+                            price: formatted.price,
+                            priceFormatted: formatted.priceFormatted,
+                            image: formatted.image,
+                            isAvailable: formatted.isAvailable,
+                            popular: formatted.stock > 15
+                        };
+                    });
+
+                    renderFeaturedItems(featuredItems);
+                    console.log('✅ Featured items loaded');
+                } else {
+                    throw new Error('No data available');
+                }
+            } catch (error) {
+                console.error('❌ Error loading featured items:', error);
+                // Use fallback data
+                const fallbackItems = [
+                    {
+                        id: 'pho-bo',
+                        name: 'Phở Bò',
+                        description: 'Nước dùng đậm đà...',
+                        priceFormatted: '85.000đ',
+                        image: 'img/pho-bo.jpg',
+                        popular: true,
+                        isAvailable: true
+                    },
+                    {
+                        id: 'com-tam',
+                        name: 'Cơm Tấm',
+                        description: 'Sườn nướng đặc biệt...',
+                        priceFormatted: '75.000đ',
+                        image: 'img/comtam.webp',
+                        isNew: true,
+                        isAvailable: true
+                    }
+                ];
+                renderFeaturedItems(fallbackItems);
+            }
+        }
+
+        function renderFeaturedItems(items) {
+            const grid = document.getElementById('featuredItemsGrid');
+            grid.innerHTML = '';
+
+            items.forEach(item => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'mobile-card mobile-transition';
+                itemElement.onclick = () => {
+                    if (item.isAvailable) {
+                        addToCart(item.id);
+                        showToast(`Đã thêm ${item.name} vào giỏ hàng!`, 'success');
+                        vibrate([50]);
+                    } else {
+                        showToast(`${item.name} hiện đã hết hàng`, 'error');
+                    }
+                };
+
+                itemElement.innerHTML = `
+                    <div class="mobile-relative">
+                        <img src="${item.image}" alt="${item.name}" class="mobile-w-full mobile-rounded-lg"
+                             style="height: 120px; object-fit: cover;"
+                             onerror="this.src='img/default-food.jpg'">
+                        ${item.popular ? '<div class="mobile-absolute mobile-top-0 mobile-right-0 mobile-m-sm"><span class="mobile-badge mobile-badge-success mobile-animate-pulse">Phổ biến</span></div>' : ''}
+                        ${item.isNew ? '<div class="mobile-absolute mobile-top-0 mobile-right-0 mobile-m-sm"><span class="mobile-badge mobile-badge-warning mobile-animate-pulse">Mới</span></div>' : ''}
+                        ${!item.isAvailable ? '<div class="mobile-absolute mobile-top-0 mobile-left-0 mobile-m-sm"><span class="mobile-badge mobile-badge-error">Hết hàng</span></div>' : ''}
+                        <div class="mobile-absolute mobile-bottom-0 mobile-left-0 mobile-right-0 mobile-bg-gradient-primary mobile-text-white mobile-p-sm mobile-rounded-b-lg"
+                             style="background: linear-gradient(transparent, rgba(0,0,0,0.7));">
+                            <div class="mobile-flex mobile-justify-between mobile-items-center">
+                                <div>
+                                    <h4 class="mobile-font-semibold mobile-text-sm">${item.name}</h4>
+                                    <p class="mobile-text-xs mobile-opacity-80">${item.description}</p>
+                                </div>
+                                <div class="mobile-text-right">
+                                    <div class="mobile-text-warning mobile-font-bold mobile-text-sm">${item.priceFormatted}</div>
+                                    <button class="mobile-btn-icon mobile-btn-sm mobile-bg-white mobile-text-primary mobile-mt-xs ${!item.isAvailable ? 'mobile-opacity-50' : ''}"
+                                            onclick="event.stopPropagation(); ${item.isAvailable ? `addToCart('${item.id}')` : `showToast('${item.name} đã hết hàng', 'error')`};"
+                                            ${!item.isAvailable ? 'disabled' : ''}>
+                                        <i class="fas fa-${item.isAvailable ? 'plus' : 'times'}"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                grid.appendChild(itemElement);
+            });
         }
 
         // Utility functions for pages to use
