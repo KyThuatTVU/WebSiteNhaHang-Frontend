@@ -3,9 +3,12 @@
 // Enhanced cart integration for API data
 class CartIntegration {
     constructor() {
-        this.API_BASE = 'http://localhost:3000';
+        // Use config for API URL with fallback
+        this.API_BASE = window.appConfig ? window.appConfig.BASE_URL : (window.BASE_URL || 'http://localhost:3000');
         this.PLACEHOLDER = `${this.API_BASE}/images/placeholder.png`;
         this.init();
+
+        console.log('🔧 CartIntegration initialized with API_BASE:', this.API_BASE);
     }
 
     init() {

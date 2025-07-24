@@ -169,7 +169,10 @@ class Chatbot {
 
     async sendMessageToAPI(message, history) {
         try {
-            console.log('🔗 Making API request to:', 'https://web-site-nha-hang-back-end.vercel.app/api/chat');
+            // Use config for API URL
+            const apiUrl = window.appConfig ? window.appConfig.getApiUrl('chat') : (window.API_BASE_URL + '/chat' || 'https://web-site-nha-hang-back-end.vercel.app/api/chat');
+
+            console.log('🔗 Making API request to:', apiUrl);
             console.log('📦 Request payload:', {
                 messages: [
                     ...history.map(msg => ({ role: msg.role, content: msg.content })),
@@ -177,7 +180,7 @@ class Chatbot {
                 ]
             });
 
-            const response = await fetch('https://web-site-nha-hang-back-end.vercel.app/api/chat', {
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

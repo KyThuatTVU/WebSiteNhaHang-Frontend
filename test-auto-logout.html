@@ -115,9 +115,10 @@
     </div>
 
     <!-- Include necessary scripts -->
+    <script src="js/config.js"></script>
     <script>
-        // Mock API base URL
-        const API_BASE_URL = 'http://localhost:3000/api';
+        // Mock API base URL (will be overridden by config)
+        const API_BASE_URL = window.appConfig ? window.appConfig.API_BASE_URL : 'http://localhost:3000/api';
     </script>
     <script src="js/auth.js"></script>
 

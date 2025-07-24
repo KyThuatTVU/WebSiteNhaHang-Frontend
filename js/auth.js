@@ -1,4 +1,5 @@
-const API_BASE_URL = 'http://localhost:3000/api';
+// Use config for API URL with fallback
+const API_BASE_URL = window.appConfig ? window.appConfig.API_BASE_URL : (window.API_BASE_URL || 'http://localhost:3000/api');
 
 // Unified Auth System - Hệ thống xác thực đồng nhất
 const auth = {
