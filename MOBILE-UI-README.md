@@ -36,7 +36,7 @@ frontend/
 │   └── mobile-responsive.css    # CSS chính cho mobile UI
 ├── js/
 │   └── mobile-utils.js         # JavaScript utilities
-├── mobile-Index-new.html       # Trang chủ mobile
+├── mobile-index.html       # Trang chủ mobile
 ├── mobile-Menu-new.html        # Trang menu mobile
 ├── mobile-demo.html            # Demo UI components
 └── MOBILE-UI-README.md         # Tài liệu này

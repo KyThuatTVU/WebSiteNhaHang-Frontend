@@ -147,7 +147,7 @@ class MigrationHelper {
                             <a href="template.html" target="_blank" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-sm">
                                 📄 Template Mẫu
                             </a>
-                            <a href="Index-new.html" target="_blank" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 text-sm">
+                            <a href="index.html" target="_blank" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 text-sm">
                                 🆕 Index Mới
                             </a>
                         </div>

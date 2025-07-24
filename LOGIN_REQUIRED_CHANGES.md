@@ -120,7 +120,7 @@ cartBtn.addEventListener('click', () => {
 - ✅ Tất cả trang có component cart-modal
 
 ### Các trang không bị ảnh hưởng:
-- Index-new.html (trang chủ)
+- index.html (trang chủ)
 - gioithieu-new.html (giới thiệu)
 - lienhe&datban-new.html (liên hệ & đặt bàn)
 

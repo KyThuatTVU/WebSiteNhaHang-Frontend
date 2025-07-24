@@ -13,7 +13,7 @@
         
         function redirectToMobile() {
             if (isMobile()) {
-                const currentPage = window.location.pathname.split('/').pop() || 'Index-new.html';
+                const currentPage = window.location.pathname.split('/').pop() || 'index.html';
                 const mobilePage = 'mobile-' + currentPage;
                 
                 // Check if mobile version exists
@@ -25,7 +25,7 @@
                     })
                     .catch(() => {
                         // Fallback to mobile home page
-                        window.location.href = 'mobile-Index-new.html';
+                        window.location.href = 'mobile-index.html';
                     });
             }
         }
@@ -35,7 +35,7 @@
         
         // Manual redirect function
         function goToMobile() {
-            window.location.href = 'mobile-Index-new.html';
+            window.location.href = 'mobile-index.html';
         }
     </script>
 </head>
@@ -58,7 +58,7 @@
                 📱 Phiên bản Mobile
             </button>
             
-            <a href="Index-new.html" style="
+            <a href="index.html" style="
                 display: inline-block;
                 margin-left: 20px;
                 background: white;

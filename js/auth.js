@@ -218,7 +218,7 @@ const auth = {
         if (window.location.pathname.includes('ThanhToan') ||
             window.location.pathname.includes('HoaDon') ||
             window.location.pathname.includes('DanhSach')) {
-            window.location.href = 'Index-new.html';
+            window.location.href = 'index.html';
         }
     },
 
@@ -577,7 +577,7 @@ const auth = {
         if (loginModal) {
             loginModal.classList.add('active');
         } else {
-            window.location.href = 'Index-new.html';
+            window.location.href = 'index.html';
         }
     },
 
@@ -880,7 +880,7 @@ const auth = {
             loginModal.classList.add('active');
         } else {
             // Redirect đến trang có form đăng nhập
-            window.location.href = 'Index-new.html';
+            window.location.href = 'index.html';
         }
 
         return false;

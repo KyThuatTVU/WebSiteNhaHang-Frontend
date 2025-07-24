@@ -753,7 +753,7 @@ class CartManager {
             // Nếu không có modal đăng nhập, redirect đến trang đăng nhập
             setTimeout(() => {
                 if (confirm('Bạn cần đăng nhập để thêm món ăn vào giỏ hàng. Chuyển đến trang đăng nhập?')) {
-                    window.location.href = 'Index-new.html';
+                    window.location.href = 'index.html';
                 }
             }, 1000);
         }
@@ -818,7 +818,7 @@ class CartManager {
                     loginModal.classList.add('active');
                 } else {
                     // Redirect đến trang có form đăng nhập
-                    window.location.href = 'Index-new.html';
+                    window.location.href = 'index.html';
                 }
             });
         }
