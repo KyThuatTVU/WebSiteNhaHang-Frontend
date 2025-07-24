@@ -1,0 +1,631 @@
+<!-- Cart Modal Component -->
+<div class="modal" id="cartModal">
+    <div class="modal-content bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 h-[90vh] max-h-[600px] overflow-hidden flex flex-col">
+        <!-- Cart Header -->
+        <div class="cart-header bg-gradient-to-r from-primary to-red-600 text-white p-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <i class="fas fa-shopping-cart text-2xl mr-3"></i>
+                    <h2 class="text-2xl font-bold">Giỏ Hàng</h2>
+                    <span id="cartItemCount" class="ml-3 bg-white text-primary px-3 py-1 rounded-full text-sm font-bold">0 món</span>
+                </div>
+                <button id="closeCartModal" class="text-white hover:text-gray-200 transition duration-300">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Cart Content -->
+        <div class="cart-content flex flex-col h-full max-h-[calc(90vh-140px)]">
+            <!-- Customer Info Display Placeholder -->
+            <div id="customer-info-placeholder" class="px-6 pt-4"></div>
+
+            <!-- Cart Loading State -->
+            <div id="cartLoadingState" class="hidden text-center py-8">
+                <div class="inline-block w-8 h-8 border-4 border-gray-300 border-t-primary rounded-full animate-spin mb-4"></div>
+                <p class="text-gray-600">Đang tải giỏ hàng...</p>
+            </div>
+
+            <!-- Cart Items -->
+            <div class="cart-items flex-1 overflow-y-scroll p-6 scroll-smooth relative min-h-0 max-h-[400px]">
+                <!-- Empty Cart State -->
+                <div id="emptyCartState" class="text-center py-12">
+                    <div class="text-gray-400 mb-4">
+                        <i class="fas fa-shopping-cart text-6xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-600 mb-2">Chưa có món ăn nào</h3>
+                    <p class="text-gray-500 mb-6">Hãy chọn món ăn yêu thích từ thực đơn</p>
+                    <button id="continueShoppingBtn" class="bg-primary hover:bg-red-700 text-white px-6 py-3 rounded-lg transition duration-300">
+                        <i class="fas fa-utensils mr-2"></i>Xem Thực Đơn
+                    </button>
+                </div>
+
+                <!-- Login Required State -->
+                <div id="loginRequiredState" class="text-center py-12 hidden">
+                    <div class="text-yellow-500 mb-4">
+                        <i class="fas fa-lock text-6xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-600 mb-2">Yêu cầu đăng nhập</h3>
+                    <p class="text-gray-500 mb-6">Vui lòng đăng nhập để xem và quản lý giỏ hàng của bạn!</p>
+                    <div class="space-y-3">
+                        <button id="openLoginFromCart" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 w-full">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Đăng nhập ngay
+                        </button>
+                        <button id="continueShoppingBtn3" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg transition duration-300 w-full">
+                            <i class="fas fa-utensils mr-2"></i>Tiếp tục xem thực đơn
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Cart Items List -->
+                <div id="cartItemsList" class="space-y-4 hidden">
+                    <!-- Cart items will be dynamically inserted here -->
+                </div>
+
+                <!-- Quick Actions -->
+                <div id="cartQuickActions" class="hidden border-t pt-4 mt-4">
+                    <div class="flex justify-between items-center text-sm text-gray-600 mb-2">
+                        <span>Thao tác nhanh:</span>
+                        <button id="toggleCartDetails" class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-eye mr-1"></i>Xem chi tiết
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cart Summary -->
+            <div id="cartSummary" class="cart-summary border-t bg-gray-50 p-6 hidden flex-shrink-0">
+                <div class="space-y-3 mb-6">
+                    <div class="flex justify-between text-gray-600">
+                        <span>Tạm tính:</span>
+                        <span id="cartSubtotal">0đ</span>
+                    </div>
+                    <div class="flex justify-between text-gray-600">
+                        <span>Phí giao hàng:</span>
+                        <span id="cartShipping">Miễn phí</span>
+                    </div>
+                    <div class="border-t pt-3">
+                        <div class="flex justify-between text-lg font-bold text-gray-800">
+                            <span>Tổng cộng:</span>
+                            <span id="cartTotal" class="text-primary">0đ</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="space-y-3">
+                    <button id="checkoutBtn" class="w-full bg-primary hover:bg-red-700 text-white py-3 px-6 rounded-lg font-bold transition duration-300">
+                        <i class="fas fa-credit-card mr-2"></i>Thanh Toán Ngay
+                    </button>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="clearCartBtn" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition duration-300">
+                            <i class="fas fa-trash mr-2"></i>Xóa Tất Cả
+                        </button>
+                        <button id="continueShoppingBtn2" class="bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg transition duration-300">
+                            <i class="fas fa-arrow-left mr-2"></i>Tiếp Tục Mua
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cart Item Template -->
+<template id="cartItemTemplate">
+    <div class="cart-item bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <div class="flex items-start space-x-4">
+            <!-- Item Image -->
+            <div class="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                <img class="item-image w-full h-full object-cover" src="" alt="" onerror="this.src='http://localhost:3000/images/placeholder.png'">
+            </div>
+
+            <!-- Item Details -->
+            <div class="flex-1 min-w-0">
+                <div class="flex justify-between items-start mb-2">
+                    <h4 class="item-name font-semibold text-gray-800 text-lg leading-tight"></h4>
+                    <button class="remove-item text-gray-400 hover:text-red-500 transition duration-300 ml-2 p-1">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                </div>
+                <p class="item-price text-primary font-bold text-lg mb-1"></p>
+                <p class="item-description text-sm text-gray-500 line-clamp-2 mb-3"></p>
+
+                <!-- Quantity Controls -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3 bg-gray-50 rounded-lg p-1 quantity-controls">
+                        <button class="quantity-decrease bg-white hover:bg-gray-100 text-gray-700 w-8 h-8 rounded-md flex items-center justify-center transition duration-300 shadow-sm" title="Giảm số lượng">
+                            <i class="fas fa-minus text-xs"></i>
+                        </button>
+                        <span class="item-quantity font-semibold text-gray-800 min-w-[2rem] text-center">1</span>
+                        <button class="quantity-increase bg-primary hover:bg-red-700 text-white w-8 h-8 rounded-md flex items-center justify-center transition duration-300 shadow-sm" title="Tăng số lượng">
+                            <i class="fas fa-plus text-xs"></i>
+                        </button>
+                    </div>
+
+                    <!-- Item Total -->
+                    <div class="text-right">
+                        <div class="text-xs text-gray-500 mb-1">Thành tiền</div>
+                        <div class="item-total font-bold text-gray-800 text-lg"></div>
+                    </div>
+                </div>
+
+                <!-- Item Details (Hidden by default) -->
+                <div class="item-details hidden mt-3 pt-3 border-t border-gray-100">
+                    <div class="grid grid-cols-2 gap-2 text-xs text-gray-500">
+                        <div>
+                            <span class="font-medium">Danh mục:</span>
+                            <span class="item-category">Món ăn</span>
+                        </div>
+                        <div>
+                            <span class="font-medium">Tồn kho:</span>
+                            <span class="item-stock">Còn hàng</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Cart Notification Template -->
+<template id="cartNotificationTemplate">
+    <div class="cart-notification fixed top-20 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span class="notification-text">Đã thêm vào giỏ hàng!</span>
+        </div>
+    </div>
+</template>
+
+<!-- Checkout Success Modal -->
+<div class="modal" id="checkoutModal">
+    <div class="modal-content bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="p-8 text-center">
+            <div class="text-green-500 text-6xl mb-4">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Đặt Hàng Thành Công!</h3>
+            <p class="text-gray-600 mb-6">Cảm ơn bạn đã đặt hàng. Chúng tôi sẽ liên hệ xác nhận trong vòng 15 phút.</p>
+            <div class="space-y-3">
+                <button id="closeCheckoutModal" class="w-full bg-primary hover:bg-red-700 text-white py-3 px-6 rounded-lg transition duration-300">
+                    Đóng
+                </button>
+                <button id="trackOrderBtn" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-6 rounded-lg transition duration-300">
+                    Theo Dõi Đơn Hàng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Cart Modal Specific Styles */
+.modal-content {
+    animation: slideInRight 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
+    height: 90vh;
+    max-height: 600px;
+}
+
+.cart-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.cart-items {
+    flex: 1;
+    min-height: 0;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.cart-item {
+    transition: all 0.3s ease;
+}
+
+.cart-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.quantity-controls button:hover {
+    transform: scale(1.1);
+}
+
+.cart-notification.show {
+    transform: translateX(0);
+}
+
+/* Improved cart item styling */
+.cart-item .item-image {
+    border-radius: 8px;
+    border: 2px solid #f3f4f6;
+}
+
+.cart-item .item-name {
+    line-height: 1.3;
+    max-height: 2.6em;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.cart-item .item-description {
+    line-height: 1.4;
+    max-height: 2.8em;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+/* Quantity controls styling */
+.quantity-controls {
+    background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+    border: 1px solid #dee2e6;
+}
+
+.quantity-controls button {
+    transition: all 0.2s ease;
+    border: none;
+    font-weight: 600;
+}
+
+.quantity-controls button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.quantity-controls .quantity-decrease:hover {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.quantity-controls .quantity-increase:hover {
+    background-color: #dc2626;
+    transform: scale(1.05);
+}
+
+/* Price styling */
+.item-price, .item-total {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* Remove button styling */
+.remove-item {
+    transition: all 0.2s ease;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-item:hover {
+    background-color: #fee2e2;
+    color: #dc2626;
+    transform: scale(1.1);
+}
+
+/* Enhanced Scrollbar styling for cart items */
+.cart-items {
+    scrollbar-width: thin;
+    scrollbar-color: #e53e3e #f1f5f9;
+    overflow-y: scroll !important;
+    overflow-x: hidden;
+    height: 100%;
+    max-height: 400px;
+}
+
+.cart-items::-webkit-scrollbar {
+    width: 14px;
+    background: transparent;
+}
+
+.cart-items::-webkit-scrollbar-track {
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+    margin: 4px;
+}
+
+.cart-items::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #e53e3e 0%, #dc2626 50%, #b91c1c 100%);
+    border-radius: 12px;
+    border: 2px solid #f8fafc;
+    box-shadow: 0 2px 8px rgba(229, 62, 62, 0.3);
+    transition: all 0.3s ease;
+    min-height: 40px;
+}
+
+.cart-items::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
+    box-shadow: 0 4px 12px rgba(229, 62, 62, 0.5);
+    border: 1px solid #f8fafc;
+}
+
+.cart-items::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(180deg, #b91c1c 0%, #991b1b 50%, #7f1d1d 100%);
+    box-shadow: 0 2px 6px rgba(229, 62, 62, 0.6);
+}
+
+/* Scrollbar corner */
+.cart-items::-webkit-scrollbar-corner {
+    background: #f8fafc;
+    border-radius: 4px;
+}
+
+/* Smooth scrolling and enhanced cart container */
+.cart-items {
+    scroll-behavior: smooth;
+    position: relative;
+}
+
+/* Gradient fade effects for better visual indication */
+.cart-items::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.cart-items::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(0deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.cart-items.scrollable::before,
+.cart-items.scrollable::after {
+    opacity: 1;
+}
+
+/* Enhanced cart item animations */
+.cart-item {
+    animation: slideInUp 0.4s ease-out;
+    margin-bottom: 1rem;
+}
+
+.cart-item:last-child {
+    margin-bottom: 0;
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Scroll indicators */
+.scroll-indicator {
+    position: absolute;
+    right: 20px;
+    background: rgba(229, 62, 62, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+    opacity: 0;
+    transform: translateX(10px);
+    transition: all 0.3s ease;
+    z-index: 20;
+}
+
+.scroll-indicator.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.scroll-indicator.top {
+    top: 30px;
+}
+
+.scroll-indicator.bottom {
+    bottom: 30px;
+}
+
+.scroll-indicator i {
+    margin-right: 4px;
+}
+
+/* Scroll control buttons */
+.scroll-controls {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 30;
+}
+
+.scroll-btn {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #e53e3e, #dc2626);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+    transition: all 0.3s ease;
+    opacity: 0.8;
+}
+
+.scroll-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(229, 62, 62, 0.4);
+}
+
+.scroll-btn:active {
+    transform: scale(0.95);
+}
+
+.scroll-btn i {
+    font-size: 14px;
+}
+
+/* Show scroll controls when needed */
+.cart-items.has-scroll .scroll-controls {
+    display: flex;
+}
+
+/* Empty cart state */
+.cart-items #emptyCartState {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+
+/* Cart summary styling */
+.cart-summary {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-top: 2px solid #e9ecef;
+}
+
+/* Cart item animations */
+.cart-item {
+    animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Quick actions styling */
+#cartQuickActions {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+#toggleCartDetails {
+    transition: all 0.2s ease;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+#toggleCartDetails:hover {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Item details styling */
+.item-details {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-radius: 6px;
+    padding: 8px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Responsive improvements */
+@media (max-width: 640px) {
+    .cart-item {
+        padding: 12px;
+    }
+
+    .cart-item .item-image {
+        width: 60px;
+        height: 60px;
+    }
+
+    .cart-item .item-name {
+        font-size: 16px;
+    }
+
+    .quantity-controls {
+        padding: 2px;
+    }
+
+    .quantity-controls button {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+
+    .item-details {
+        padding: 6px;
+        font-size: 11px;
+    }
+
+    /* Mobile scrollbar */
+    .cart-items::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .cart-items::-webkit-scrollbar-thumb {
+        border: 1px solid #f8fafc;
+    }
+
+    /* Mobile scroll indicators */
+    .scroll-indicator {
+        right: 10px;
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    .scroll-indicator.top {
+        top: 20px;
+    }
+
+    .scroll-indicator.bottom {
+        bottom: 20px;
+    }
+}
+</style>

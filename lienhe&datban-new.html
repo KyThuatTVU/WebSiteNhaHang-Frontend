@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt Bàn & Liên Hệ - Nhà Hàng Ẩm Thực Phương Nam</title>
+    <link rel="icon" href="img/logoPN.png" type="image/png">
+    
+    <!-- External CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="css/main.css" rel="stylesheet">
+    <link href="css/components.css" rel="stylesheet">
+    <link href="css/animations.css" rel="stylesheet">
+    
+    <!-- External JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    
+    <!-- Page specific styles -->
+    <style>
+        /* Reservation form styles */
+        .reservation-form {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .contact-info-card {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #f59e0b;
+        }
+        
+       .contact-item {
+            background: #ffffff; 
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            padding: 1rem;
+            transition: all 0.3s ease;
+            opacity: 1 !important;
+        }
+
+        .contact-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .map-container {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border: 1px solid #3b82f6;
+        }
+        
+        .form-input {
+            transition: all 0.3s ease;
+            border: 2px solid #e5e7eb;
+        }
+        
+        .form-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .submit-btn {
+            background: linear-gradient(45deg, #e53e3e, #dc2626);
+            transition: all 0.3s ease;
+        }
+        
+        .submit-btn:hover {
+            background: linear-gradient(45deg, #dc2626, #b91c1c);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(229, 62, 62, 0.3);
+        }
+        
+        .submit-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        /* Success/Error states */
+        .form-success {
+            background: linear-gradient(45deg, #10b981, #059669);
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            animation: slideInDown 0.5s ease;
+        }
+        
+        .form-error {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            animation: shake 0.5s ease;
+        }
+        
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Loading spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #e53e3e;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Map responsive */
+        .map-iframe {
+            border-radius: 0.5rem;
+            filter: grayscale(20%);
+            transition: filter 0.3s ease;
+        }
+        
+        .map-iframe:hover {
+            filter: grayscale(0%);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Header Placeholder -->
+    <div id="header-placeholder"></div>
+
+    <!-- Ad Banner Placeholder -->
+    <div id="ad-banner-placeholder"></div>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Reservation Section Content -->
+        <section class="py-12 bg-gray-100" id="reservationSection">
+            <div class="container mx-auto px-4">
+                <!-- Page Title -->
+                <div class="text-center mb-12 fade-in" id="reservationTitle">
+                    <h2 class="text-4xl font-bold mb-4" data-i18n="reservation_title">Đặt Bàn & Liên Hệ</h2>
+                    <p class="text-gray-600 text-lg" data-i18n="reservation_subtitle">Đặt bàn trước để có trải nghiệm tốt nhất tại Phương Nam</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12" id="reservationGrid">
+                    <!-- Reservation Form -->
+                    <div class="reservation-form p-8 rounded-xl slide-in-left">
+                        <h3 class="text-2xl font-bold mb-6 text-center" data-i18n="online_reservation">
+                            <i class="fas fa-calendar-alt text-primary mr-2"></i>
+                            ĐẶT BÀN ONLINE
+                        </h3>
+                        
+                        <!-- Success/Error Messages -->
+                        <div id="formMessages"></div>
+                        
+                        <form id="reservationForm" class="space-y-6" method="POST">
+                            <!-- Thông tin khách hàng -->
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="text-lg font-semibold mb-4 text-gray-800" data-i18n="customer_info">
+                                    <i class="fas fa-user-circle mr-2 text-primary"></i>Thông Tin Khách Hàng
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="ten_khach" class="block text-gray-700 mb-2 font-semibold" data-i18n="label_fullname">
+                                            <i class="fas fa-user mr-1"></i>Họ và tên <span class="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="ten_khach"
+                                            name="ten_khach"
+                                            class="form-input w-full px-4 py-3 rounded-lg focus:outline-none"
+                                            placeholder="Nhập họ và tên đầy đủ"
+                                            data-i18n-placeholder="placeholder_fullname"
+                                            maxlength="100"
+                                            required>
+                                        <div class="text-red-500 text-sm mt-1 hidden" id="ten_khach_error"></div>
+                                    </div>
+                                    <div>
+                                        <label for="sdt" class="block text-gray-700 mb-2 font-semibold" data-i18n="label_phone">
+                                            <i class="fas fa-phone mr-1"></i>Số điện thoại <span class="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            id="sdt"
+                                            name="sdt"
+                                            class="form-input w-full px-4 py-3 rounded-lg focus:outline-none"
+                                            placeholder="0901234567"
+                                            data-i18n-placeholder="placeholder_phone"
+                                            pattern="[0-9]{10,11}"
+                                            maxlength="20"
+                                            required>
+                                        <div class="text-red-500 text-sm mt-1 hidden" id="sdt_error"></div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <label for="email" class="block text-gray-700 mb-2 font-semibold" data-i18n="label_email">
+                                        <i class="fas fa-envelope mr-1"></i>Email (tùy chọn)
+                                    </label>
+                                    <input
+                                        type="email"
+                                        id="email"
+                                        name="email"
+                                        class="form-input w-full px-4 py-3 rounded-lg focus:outline-none"
+                                        placeholder="example@email.com"
+                                        data-i18n-placeholder="placeholder_email"
+                                        maxlength="100">
+                                    <div class="text-red-500 text-sm mt-1 hidden" id="email_error"></div>
+                                </div>
+                            </div>
+
+                            <!-- Thông tin đặt bàn -->
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <h4 class="text-lg font-semibold mb-4 text-gray-800" data-i18n="reservation_info">
+                                    <i class="fas fa-calendar-check mr-2 text-primary"></i>Thông Tin Đặt Bàn
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label for="ngay" class="block text-gray-700 mb-2 font-semibold" data-i18n="label_date">
+                                            <i class="fas fa-calendar mr-1"></i>Ngày đặt <span class="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="date"
+                                            id="ngay"
+                                            name="ngay"
+                                            class="form-input w-full px-4 py-3 rounded-lg focus:outline-none"
+                                            required>
+                                        <div class="text-red-500 text-sm mt-1 hidden" id="ngay_error"></div>
+                                    </div>
+                                    <div>
+                                        <label for="gio" class="block text-gray-700 mb-2 font-semibold" data-i18n="label_time">
+                                            <i class="fas fa-clock mr-1"></i>Giờ đặt <span class="text-red-500">*</span>
+                                        </label>
+                                        <select
+                                            id="gio"
+                                            name="gio"
+                                            class="form-input w-full px-4 py-3 rounded-lg focus:outline-none"
+                                            required>
+                                            <option value="">Chọn giờ</option>
+                                            <option value="10:00">10:00 - Sáng</option>
+                                            <option value="10:30">10:30 - Sáng</option>
+                                            <option value="11:00">11:00 - Sáng</option>
+                                            <option value="11:30">11:30 - Sáng</option>
+                                            <option value="12:00">12:00 - Trưa</option>
+                                            <option value="12:30">12:30 - Trưa</option>
+                                            <option value="13:00">13:00 - Trưa</option>
+                                            <option value="13:30">13:30 - Trưa</option>
+                                            <option value="17:00">17:00 - Chiều</option>
+                                            <option value="17:30">17:30 - Chiều</option>
+                                            <option value="18:00">18:00 - Tối</option>
+                                            <option value="18:30">18:30 - Tối</option>
+                                            <option value="19:00" selected>19:00 - Tối</option>
+                                            <option value="19:30">19:30 - Tối</option>
+                                            <option value="20:00">20:00 - Tối</option>
+                                            <option value="20:30">20:30 - Tối</option>
+                                            <option value="21:00">21:00 - Tối</option>
+                                        </select>
+                                        <div class="text-red-500 text-sm mt-1 hidden" id="gio_error"></div>
+                                    </div>
+                                    <div>
+                                        <label for="so_luong_khach" class="block text-gray-700 mb-2 font-semibold" data-i18n="label_guests">
+                                            <i class="fas fa-users mr-1"></i>Số lượng khách <span class="text-red-500">*</span>
+                                        </label>
+                                        <select
+                                            id="so_luong_khach"
+                                            name="so_luong_khach"
+                                            class="form-input w-full px-4 py-3 rounded-lg focus:outline-none"
+                                            required>
+                                            <option value="">Chọn số khách</option>
+                                            <option value="1">1 người</option>
+                                            <option value="2" selected>2 người</option>
+                                            <option value="3">3 người</option>
+                                            <option value="4">4 người</option>
+                                            <option value="5">5 người</option>
+                                            <option value="6">6 người</option>
+                                            <option value="7">7 người</option>
+                                            <option value="8">8 người</option>
+                                            <option value="9">9 người</option>
+                                            <option value="10">10 người</option>
+                                            <option value="12">12 người</option>
+                                            <option value="15">15 người</option>
+                                            <option value="20">20 người</option>
+                                        </select>
+                                        <div class="text-red-500 text-sm mt-1 hidden" id="so_luong_khach_error"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ghi chú -->
+                            <div class="bg-yellow-50 p-4 rounded-lg">
+                                <h4 class="text-lg font-semibold mb-4 text-gray-800">
+                                    <i class="fas fa-sticky-note mr-2 text-primary"></i>Ghi Chú Đặc Biệt
+                                </h4>
+                                <div>
+                                    <label for="ghi_chu" class="block text-gray-700 mb-2 font-semibold">
+                                        <i class="fas fa-comment mr-1"></i>Yêu cầu đặc biệt (tùy chọn)
+                                    </label>
+                                    <textarea
+                                        id="ghi_chu"
+                                        name="ghi_chu"
+                                        rows="4"
+                                        class="form-input w-full px-4 py-3 rounded-lg focus:outline-none resize-none"
+                                        placeholder="Ví dụ: Bàn gần cửa sổ, kỷ niệm sinh nhật, dị ứng thực phẩm, yêu cầu đặc biệt khác..."
+                                        maxlength="500"></textarea>
+                                    <div class="text-gray-500 text-sm mt-1">
+                                        <span id="ghi_chu_count">0</span>/500 ký tự
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Trạng thái ẩn -->
+                            <input type="hidden" id="trang_thai" name="trang_thai" value="cho_xac_nhan">
+
+                            <!-- Submit button -->
+                            <div class="pt-4">
+                                <button type="submit" id="submitBtn" class="submit-btn w-full text-white font-bold py-4 px-6 rounded-lg transition duration-300">
+                                    <span id="submitText">
+                                        <i class="fas fa-utensils mr-2"></i>Gửi Yêu Cầu Đặt Bàn
+                                    </span>
+                                    <span id="submitLoading" class="hidden">
+                                        <span class="loading-spinner mr-2"></span>Đang xử lý...
+                                    </span>
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div class="mt-6 text-center text-sm text-gray-600">
+                            <p><i class="fas fa-info-circle mr-1"></i>Chúng tôi sẽ xác nhận đặt bàn trong vòng 15 phút</p>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information & Map -->
+                    <div class="space-y-8 slide-in-right">
+                        <!-- Contact Information -->
+                        <div class="contact-info-card px-8 pt-8 pb-10 rounded-xl bg-white border border-yellow-300">
+                            <h3 class="text-2xl font-bold mb-6 text-gray-800 text-center">
+                                <i class="fas fa-address-book text-red-500 mr-2"></i>
+                                THÔNG TIN LIÊN HỆ
+                            </h3>
+
+                            <div class="space-y-4">
+                                <!-- Địa chỉ -->
+                                <div class="contact-item p-4 rounded-lg shadow-md bg-white text-gray-800">
+                                    <div class="flex items-start">
+                                        <div class="text-red-500 text-2xl mr-4 pt-1">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold mb-1 text-lg">Địa Chỉ</h4>
+                                            <p>Đ. Trương Văn Kĩnh/258 Phú Hòa, Long Đức, Trà Vinh</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Điện thoại -->
+                                <div class="contact-item p-4 rounded-lg shadow-md bg-white text-gray-800">
+                                    <div class="flex items-start">
+                                        <div class="text-orange-500 text-2xl mr-4 pt-1">
+                                            <i class="fas fa-phone-alt"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold mb-1 text-lg">Điện Thoại</h4>
+                                            <p><a href="tel:02812345678" class="hover:text-orange-500 transition">028 1234 5678</a></p>
+                                            <p><a href="tel:0901234567" class="hover:text-orange-500 transition">0901 234 567</a></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Email -->
+                                <div class="contact-item p-4 rounded-lg shadow-md bg-white text-gray-800">
+                                    <div class="flex items-start">
+                                        <div class="text-yellow-500 text-2xl mr-4 pt-1">
+                                            <i class="fas fa-envelope"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold mb-1 text-lg">Email</h4>
+                                            <p><a href="mailto:contact@phuongnam.com" class="hover:text-yellow-500 transition">contact@phuongnam.com</a></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Map -->
+                        <div class="map-container p-8 rounded-xl">
+                            <h3 class="text-2xl font-bold mb-6 text-gray-800 text-center">
+                                <i class="fas fa-map text-primary mr-2"></i>
+                                Bản Đồ Chỉ Đường
+                            </h3>
+                            <div class="bg-white p-2 rounded-lg shadow-inner">
+                                <iframe 
+                                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d11115.241814310404!2d106.3268878341257!3d9.947979526241362!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31a011ccd79fbd87%3A0xa9b4b8044a27d02e!2z4bqobSBUaOG7sWMgQUxPIER6byAxMDAgVHLDoCBWaW5o!5e0!3m2!1svi!2s!4v1745374083777!5m2!1svi!2s" 
+                                    width="100%" 
+                                    height="350" 
+                                    style="border:0;" 
+                                    class="map-iframe"
+                                    allowfullscreen="" 
+                                    loading="lazy">
+                                </iframe>
+                            </div>
+                            <div class="mt-4 text-center">
+                                <a href="https://maps.app.goo.gl/tFTFa3QC6qiWFssj9" 
+                                   target="_blank" 
+                                   class="inline-flex items-center text-primary hover:text-red-700 transition font-semibold">
+                                    <i class="fas fa-external-link-alt mr-2"></i>
+                                    Mở trong Google Maps
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer Placeholder -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Chatbot Placeholder -->
+    <div id="chatbot-placeholder"></div>
+
+    <!-- Login Modal Placeholder -->
+    <div id="login-modal-placeholder"></div>
+
+    <!-- Floating Contact Placeholder -->
+    <div id="floating-contact-placeholder"></div>
+
+    <!-- JavaScript -->
+    <script src="js/auth.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/lang.js"></script>
+    <script src="js/chatbot.js"></script>
+    <script src="js/reservation.js"></script>
+    
+    <!-- Initialize reservation -->
+    <script>
+        // Initialize reservation when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Lienhe&datban-new.html loaded successfully!');
+
+            // Initialize reservation manager after components are loaded
+            setTimeout(() => {
+                if (window.ReservationManager) {
+                    window.reservationManager = new ReservationManager();
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>

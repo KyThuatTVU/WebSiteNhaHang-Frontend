@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Mobile</title>
+    <link rel="icon" href="img/logoPN.png" type="image/png">
+    <script>
+        // Detect mobile and redirect
+        function isMobile() {
+            return window.innerWidth < 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+        
+        function redirectToMobile() {
+            if (isMobile()) {
+                const currentPage = window.location.pathname.split('/').pop() || 'Index-new.html';
+                const mobilePage = 'mobile-' + currentPage;
+                
+                // Check if mobile version exists
+                fetch(mobilePage, { method: 'HEAD' })
+                    .then(response => {
+                        if (response.ok) {
+                            window.location.href = mobilePage;
+                        }
+                    })
+                    .catch(() => {
+                        // Fallback to mobile home page
+                        window.location.href = 'mobile-Index-new.html';
+                    });
+            }
+        }
+        
+        // Auto redirect on load
+        window.addEventListener('load', redirectToMobile);
+        
+        // Manual redirect function
+        function goToMobile() {
+            window.location.href = 'mobile-Index-new.html';
+        }
+    </script>
+</head>
+<body>
+    <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+        <h1>🍽️ Restaurant Management</h1>
+        <p>Chào mừng bạn đến với hệ thống quản lý nhà hàng</p>
+        
+        <div style="margin: 30px 0;">
+            <button onclick="goToMobile()" style="
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white;
+                border: none;
+                padding: 15px 30px;
+                border-radius: 10px;
+                font-size: 16px;
+                cursor: pointer;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            ">
+                📱 Phiên bản Mobile
+            </button>
+            
+            <a href="Index-new.html" style="
+                display: inline-block;
+                margin-left: 20px;
+                background: white;
+                color: #667eea;
+                border: 2px solid #667eea;
+                padding: 13px 28px;
+                border-radius: 10px;
+                text-decoration: none;
+                font-size: 16px;
+            ">
+                💻 Phiên bản Desktop
+            </a>
+        </div>
+        
+        <p style="color: #666; font-size: 14px;">
+            Hệ thống tự động phát hiện thiết bị và chuyển hướng phù hợp
+        </p>
+    </div>
+</body>
+</html>

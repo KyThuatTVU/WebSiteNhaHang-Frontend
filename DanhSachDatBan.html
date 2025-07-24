@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Đặt Bàn - Restaurant Management</title>
+    <link rel="icon" href="img/logoPN.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .reservation-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        .reservation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        .status-pending { border-left-color: #f59e0b; }
+        .status-confirmed { border-left-color: #10b981; }
+        .status-cancelled { border-left-color: #ef4444; }
+        
+        .filter-tab {
+            transition: all 0.3s ease;
+        }
+        .filter-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .modal-backdrop {
+            backdrop-filter: blur(5px);
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Modern gradient background */
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* Enhanced header styling */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Enhanced cards */
+        .bg-white {
+            background: rgba(255, 255, 255, 0.9) !important;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Enhanced scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2, #667eea);
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+
+            header, .filter-tab, button, .modal-backdrop {
+                display: none !important;
+            }
+
+            /* Hide everything except active print ticket */
+            .container {
+                display: none !important;
+            }
+
+            .print-ticket.active {
+                display: block !important;
+            }
+
+            .bg-white {
+                background: white !important;
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+            }
+
+            .reservation-card {
+                border: 1px solid #ddd !important;
+                margin-bottom: 15px !important;
+                padding: 15px !important;
+                page-break-inside: avoid;
+                border-radius: 0 !important;
+            }
+
+            .reservation-card h3 {
+                font-size: 16px !important;
+                font-weight: bold !important;
+                margin-bottom: 8px !important;
+            }
+
+            .reservation-card .grid {
+                display: block !important;
+            }
+
+            .reservation-card .grid > div {
+                display: inline-block !important;
+                margin-right: 20px !important;
+                margin-bottom: 5px !important;
+            }
+
+            .text-blue-600, .text-green-600, .text-purple-600, .text-yellow-600, .text-red-600 {
+                color: black !important;
+            }
+
+            .bg-yellow-50, .bg-green-50, .bg-red-50, .bg-gray-50 {
+                background: white !important;
+            }
+
+            .print-header {
+                display: block !important;
+                text-align: center;
+                margin-bottom: 20px;
+                border-bottom: 2px solid #000;
+                padding-bottom: 10px;
+            }
+
+            .print-date {
+                display: block !important;
+                text-align: right;
+                margin-bottom: 10px;
+                font-size: 12px;
+            }
+
+            .print-footer {
+                display: block !important;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                text-align: center;
+                font-size: 10px;
+                border-top: 1px solid #000;
+                padding: 5px;
+                background: white;
+            }
+
+            @page {
+                margin: 2cm;
+                @bottom-center {
+                    content: "Trang " counter(page) " / " counter(pages);
+                }
+            }
+
+            /* Single ticket print styles */
+            .print-ticket {
+                display: none;
+                width: 100%;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+                font-family: Arial, sans-serif;
+                background: white;
+                color: black;
+            }
+
+            .print-ticket.active {
+                display: block !important;
+            }
+
+            .ticket-header {
+                text-align: center;
+                border-bottom: 3px solid #000;
+                padding-bottom: 15px;
+                margin-bottom: 20px;
+            }
+
+            .ticket-title {
+                font-size: 24px;
+                font-weight: bold;
+                margin: 0;
+                text-transform: uppercase;
+            }
+
+            .ticket-subtitle {
+                font-size: 18px;
+                margin: 5px 0;
+                color: #333;
+            }
+
+            .ticket-info {
+                display: flex;
+                justify-content: space-between;
+                margin: 20px 0;
+                font-size: 14px;
+            }
+
+            .ticket-content {
+                border: 2px solid #000;
+                padding: 20px;
+                margin: 20px 0;
+            }
+
+            .info-row {
+                display: flex;
+                margin-bottom: 15px;
+                align-items: center;
+            }
+
+            .info-label {
+                font-weight: bold;
+                width: 150px;
+                flex-shrink: 0;
+            }
+
+            .info-value {
+                flex: 1;
+                border-bottom: 1px dotted #000;
+                padding-bottom: 2px;
+                min-height: 20px;
+            }
+
+            .status-badge {
+                display: inline-block;
+                padding: 5px 15px;
+                border: 2px solid #000;
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+
+            .ticket-footer {
+                margin-top: 30px;
+                border-top: 1px solid #000;
+                padding-top: 15px;
+                font-size: 12px;
+                text-align: center;
+            }
+
+            .signature-section {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 40px;
+                text-align: center;
+            }
+
+            .signature-box {
+                width: 200px;
+            }
+
+            .signature-line {
+                border-top: 1px solid #000;
+                margin-top: 50px;
+                padding-top: 5px;
+                font-size: 12px;
+            }
+        }
+
+        .print-header, .print-date, .print-footer {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="sticky top-0 z-40">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-gradient-to-r from-blue-600 to-purple-600 w-12 h-12 rounded-full flex items-center justify-center">
+                        <i class="fas fa-calendar-check text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">Quản Lý Đặt Bàn</h1>
+                        <p class="text-gray-600">Theo dõi và quản lý các đặt bàn</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- User Info -->
+                    <div class="flex items-center space-x-3 bg-gray-50 px-4 py-2 rounded-lg">
+                        <div class="flex items-center space-x-2">
+                            <div id="userRoleBadge" class="px-2 py-1 rounded text-xs font-semibold">
+                                <!-- Role badge will be inserted here -->
+                            </div>
+                            <span id="currentUserName" class="text-sm font-medium text-gray-700">
+                                <!-- Username will be inserted here -->
+                            </span>
+                        </div>
+                        <button onclick="logout()" class="text-red-600 hover:text-red-800 transition-colors" title="Đăng xuất">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="flex items-center space-x-3">
+                        <button onclick="printReservationsList()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-print mr-2"></i>In DS
+                        </button>
+                        <button onclick="goToInvoices()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-receipt mr-2"></i>Hóa đơn
+                        </button>
+                        <button onclick="goToMenu()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-utensils mr-2"></i>Menu
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-6">
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Tổng đặt bàn</p>
+                        <p id="totalReservations" class="text-2xl font-bold text-gray-900">0</p>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full">
+                        <i class="fas fa-calendar-alt text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Chờ xác nhận</p>
+                        <p id="pendingReservations" class="text-2xl font-bold text-yellow-600">0</p>
+                    </div>
+                    <div class="bg-yellow-100 p-3 rounded-full">
+                        <i class="fas fa-hourglass-half text-yellow-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Đã xác nhận</p>
+                        <p id="confirmedReservations" class="text-2xl font-bold text-green-600">0</p>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-full">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Đã hủy</p>
+                        <p id="cancelledReservations" class="text-2xl font-bold text-red-600">0</p>
+                    </div>
+                    <div class="bg-red-100 p-3 rounded-full">
+                        <i class="fas fa-times-circle text-red-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters and Search -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <!-- Status Filters -->
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="filterByStatus('all')" class="filter-tab active px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" data-status="all">
+                        <i class="fas fa-list mr-2"></i>Tất cả
+                    </button>
+                    <button onclick="filterByStatus('cho_xac_nhan')" class="filter-tab px-4 py-2 rounded-lg border border-gray-300 hover:bg-yellow-50" data-status="cho_xac_nhan">
+                        <i class="fas fa-hourglass-half mr-2"></i>Chờ xác nhận
+                    </button>
+                    <button onclick="filterByStatus('da_xac_nhan')" class="filter-tab px-4 py-2 rounded-lg border border-gray-300 hover:bg-green-50" data-status="da_xac_nhan">
+                        <i class="fas fa-check-circle mr-2"></i>Đã xác nhận
+                    </button>
+                    <button onclick="filterByStatus('da_huy')" class="filter-tab px-4 py-2 rounded-lg border border-gray-300 hover:bg-red-50" data-status="da_huy">
+                        <i class="fas fa-times-circle mr-2"></i>Đã hủy
+                    </button>
+                </div>
+
+                <!-- Search and Date Filter -->
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <input type="date" id="dateFilter" class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <i class="fas fa-calendar-alt absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                    <div class="relative">
+                        <input type="text" id="searchInput" placeholder="Tìm theo tên, SĐT..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                    <button onclick="refreshReservations()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-sync-alt mr-2"></i>Làm mới
+                    </button>
+                    <button onclick="printReservationsList()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-print mr-2"></i>In danh sách
+                    </button>
+                    <button onclick="exportToCSV()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-file-csv mr-2"></i>Xuất CSV
+                    </button>
+                    <button onclick="printAllTickets()" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors">
+                        <i class="fas fa-print mr-2"></i>In tất cả phiếu
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reservations List -->
+        <div class="bg-white rounded-lg shadow-sm">
+            <!-- Print Header (only visible when printing) -->
+            <div class="print-header">
+                <h1 style="font-size: 24px; font-weight: bold; margin: 0;">NHÀ HÀNG ẨM THỰC PHƯƠNG NAM</h1>
+                <h2 style="font-size: 18px; margin: 5px 0;">DANH SÁCH ĐẶT BÀN</h2>
+                <div class="print-date" id="printDate"></div>
+                <div id="printSummary" style="margin: 10px 0; font-size: 14px;"></div>
+            </div>
+
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-800">
+                    <i class="fas fa-list mr-2 text-blue-600"></i>Danh sách đặt bàn
+                </h2>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="loadingState" class="p-8 text-center">
+                <div class="inline-flex items-center">
+                    <i class="fas fa-spinner fa-spin text-blue-600 text-xl mr-3"></i>
+                    <span class="text-gray-600">Đang tải dữ liệu...</span>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="p-8 text-center hidden">
+                <div class="text-gray-400 mb-4">
+                    <i class="fas fa-calendar-times text-6xl"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-600 mb-2">Không có đặt bàn nào</h3>
+                <p class="text-gray-500">Chưa có đặt bàn nào phù hợp với bộ lọc hiện tại</p>
+            </div>
+
+            <!-- Reservations Container -->
+            <div id="reservationsContainer" class="divide-y divide-gray-200">
+                <!-- Reservations will be loaded here -->
+            </div>
+
+            <!-- Pagination -->
+            <div id="paginationContainer" class="p-6 border-t border-gray-200 hidden">
+                <!-- Pagination will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Print Footer (only visible when printing) -->
+    <div class="print-footer">
+        <p>Nhà hàng Ẩm thực Phương Nam - Địa chỉ: 126 Nguyễn Thiện Thành, Khóm 4, Phường 5, TP. Trà Vinh</p>
+        <p>Điện thoại: 0294.3855.246 | Email: info@amthucphuongnam.vn</p>
+    </div>
+
+    <!-- Single Ticket Print Template -->
+    <div id="printTicketTemplate" class="print-ticket">
+        <div class="ticket-header">
+            <h1 class="ticket-title">Nhà Hàng Ẩm Thực Phương Nam</h1>
+            <p class="ticket-subtitle">PHIẾU ĐẶT BÀN</p>
+            <div class="ticket-info">
+                <div>📍 126 Nguyễn Thiện Thành, Khóm 4, Phường 5, TP. Trà Vinh</div>
+                <div>📞 0294.3855.246</div>
+            </div>
+        </div>
+
+        <div class="ticket-content">
+            <div class="info-row">
+                <div class="info-label">Mã đặt bàn:</div>
+                <div class="info-value" id="ticket-id"></div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Tên khách hàng:</div>
+                <div class="info-value" id="ticket-customer-name"></div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Số điện thoại:</div>
+                <div class="info-value" id="ticket-phone"></div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Email:</div>
+                <div class="info-value" id="ticket-email"></div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Ngày đặt:</div>
+                <div class="info-value" id="ticket-date"></div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Giờ đặt:</div>
+                <div class="info-value" id="ticket-time"></div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Số lượng khách:</div>
+                <div class="info-value" id="ticket-guests"></div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Trạng thái:</div>
+                <div class="info-value">
+                    <span class="status-badge" id="ticket-status"></span>
+                </div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Ghi chú:</div>
+                <div class="info-value" id="ticket-notes" style="min-height: 40px;"></div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Ngày tạo:</div>
+                <div class="info-value" id="ticket-created"></div>
+            </div>
+
+            <!-- Table Assignment Section -->
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed #000;">
+                <div class="info-row">
+                    <div class="info-label">Bàn số:</div>
+                    <div class="info-value" style="font-size: 18px; font-weight: bold; text-align: center;">
+                        _______________
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 10px; font-size: 12px; color: #666;">
+                    (Nhân viên điền bàn được xếp)
+                </div>
+            </div>
+        </div>
+
+        <div class="signature-section">
+            <div class="signature-box">
+                <div class="signature-line">Khách hàng</div>
+            </div>
+            <div class="signature-box">
+                <div class="signature-line">Nhân viên tiếp nhận</div>
+            </div>
+        </div>
+
+        <div class="ticket-footer">
+            <div style="background: #f5f5f5; padding: 10px; margin: 20px 0; border-left: 4px solid #333;">
+                <p><strong>📋 QUY ĐỊNH VÀ LUU Ý:</strong></p>
+                <ul style="margin: 5px 0; padding-left: 20px; font-size: 11px;">
+                    <li>Quý khách vui lòng đến đúng giờ đã đặt</li>
+                    <li>Nhà hàng chỉ giữ bàn trong 15 phút kể từ giờ đặt</li>
+                    <li>Vui lòng mang theo phiếu này khi đến nhà hàng</li>
+                    <li>Liên hệ 0294.3855.246 nếu cần thay đổi hoặc hủy đặt bàn</li>
+                </ul>
+            </div>
+
+            <div style="text-align: center; margin: 15px 0;">
+                <p style="font-size: 14px; font-weight: bold;">🍽️ CHÚC QUÝ KHÁCH DÙNG BỮA NGON MIỆNG! 🍽️</p>
+                <p style="font-size: 12px; margin-top: 5px;">Cảm ơn quý khách đã tin tưởng và sử dụng dịch vụ của chúng tôi!</p>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 10px; margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px;">
+                <span>Mã phiếu: <span id="ticket-code"></span></span>
+                <span>In lúc: <span id="ticket-print-time"></span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reservation Detail Modal -->
+    <div id="reservationModal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 hidden">
+        <div class="modal-content max-w-2xl mx-4 max-h-[90vh] overflow-auto">
+            <div class="p-6">
+                <!-- Modal Header -->
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-gray-800">
+                        <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                        Chi tiết đặt bàn
+                    </h3>
+                    <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Content -->
+                <div id="modalContent">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/admin-auth.js"></script>
+    <script>
+        let adminAuth;
+        let currentFilter = 'all';
+        let currentPage = 1;
+        let allReservations = [];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            adminAuth = new AdminAuth();
+            
+            // Check authentication
+            if (!adminAuth.isLoggedIn()) {
+                window.location.href = 'admin-login.html';
+                return;
+            }
+
+            initializePage();
+        });
+
+        // Initialize page with authentication
+        function initializePage() {
+            updateUIForUserRole();
+            loadReservations();
+            setupEventListeners();
+        }
+
+        // Update UI based on user role
+        function updateUIForUserRole() {
+            const currentUser = adminAuth.getCurrentUser();
+            if (!currentUser) return;
+
+            // Update user info in header
+            document.getElementById('currentUserName').textContent = currentUser.fullName;
+
+            const roleBadge = document.getElementById('userRoleBadge');
+            if (currentUser.role === 'admin') {
+                roleBadge.textContent = 'ADMIN';
+                roleBadge.className = 'px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800';
+            } else {
+                roleBadge.textContent = 'NHÂN VIÊN';
+                roleBadge.className = 'px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800';
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Search input
+            document.getElementById('searchInput').addEventListener('input', debounce(function() {
+                loadReservations();
+            }, 500));
+
+            // Date filter
+            document.getElementById('dateFilter').addEventListener('change', function() {
+                loadReservations();
+            });
+        }
+
+        // Debounce function
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Load reservations from database API
+        async function loadReservations() {
+            showLoading(true);
+
+            try {
+                // Build API URL with filters
+                const params = new URLSearchParams();
+
+                // Status filter
+                if (currentFilter !== 'all') {
+                    params.append('status', currentFilter);
+                }
+
+                // Date filter
+                const dateFilter = document.getElementById('dateFilter').value;
+                if (dateFilter) {
+                    params.append('date', dateFilter);
+                }
+
+                // Search filter
+                const searchTerm = document.getElementById('searchInput').value.trim();
+                if (searchTerm) {
+                    params.append('phone', searchTerm); // API supports phone search
+                }
+
+                // Pagination
+                params.append('page', currentPage);
+                params.append('limit', 50);
+
+                const apiUrl = `http://localhost:3000/api/datban?${params.toString()}`;
+                console.log('🔍 Loading reservations from:', apiUrl);
+
+                const response = await fetch(apiUrl);
+                const result = await response.json();
+
+                if (result.success) {
+                    allReservations = result.data || [];
+                    console.log('✅ Loaded reservations from DB:', allReservations);
+
+                    // Update statistics
+                    await updateStatistics();
+
+                    // Render reservations
+                    renderReservations(allReservations);
+                } else {
+                    console.error('❌ API Error:', result.message);
+                    showError('Không thể tải dữ liệu đặt bàn: ' + result.message);
+                    allReservations = [];
+                    renderReservations([]);
+                }
+
+            } catch (error) {
+                console.error('❌ Network Error:', error);
+                showError('Lỗi kết nối server: ' + error.message);
+                allReservations = [];
+                renderReservations([]);
+            }
+
+            showLoading(false);
+        }
+
+
+
+        // Update statistics from API
+        async function updateStatistics() {
+            try {
+                // Load all reservations for accurate statistics
+                const response = await fetch('http://localhost:3000/api/datban?limit=1000');
+                const result = await response.json();
+
+                if (result.success) {
+                    const allReservations = result.data || [];
+
+                    const total = allReservations.length;
+                    const pending = allReservations.filter(res => res.trang_thai === 'cho_xac_nhan').length;
+                    const confirmed = allReservations.filter(res => res.trang_thai === 'da_xac_nhan').length;
+                    const cancelled = allReservations.filter(res => res.trang_thai === 'da_huy').length;
+
+                    document.getElementById('totalReservations').textContent = total;
+                    document.getElementById('pendingReservations').textContent = pending;
+                    document.getElementById('confirmedReservations').textContent = confirmed;
+                    document.getElementById('cancelledReservations').textContent = cancelled;
+                } else {
+                    console.error('❌ Error loading statistics:', result.message);
+                    // Set to 0 if can't load
+                    document.getElementById('totalReservations').textContent = '0';
+                    document.getElementById('pendingReservations').textContent = '0';
+                    document.getElementById('confirmedReservations').textContent = '0';
+                    document.getElementById('cancelledReservations').textContent = '0';
+                }
+            } catch (error) {
+                console.error('❌ Network error loading statistics:', error);
+                // Set to 0 if can't load
+                document.getElementById('totalReservations').textContent = '0';
+                document.getElementById('pendingReservations').textContent = '0';
+                document.getElementById('confirmedReservations').textContent = '0';
+                document.getElementById('cancelledReservations').textContent = '0';
+            }
+        }
+
+        // Render reservations list
+        function renderReservations(reservations) {
+            const container = document.getElementById('reservationsContainer');
+            const emptyState = document.getElementById('emptyState');
+
+            if (reservations.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            const reservationsHTML = reservations.map(reservation => {
+                const statusClass = getStatusClass(reservation.trang_thai);
+                const statusText = getStatusText(reservation.trang_thai);
+                const statusIcon = getStatusIcon(reservation.trang_thai);
+
+                return `
+                    <div class="reservation-card ${statusClass} p-6 hover:bg-gray-50 cursor-pointer" onclick="showReservationDetail(${reservation.id_datban})">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-4 mb-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-user text-blue-600"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="text-lg font-semibold text-gray-900">${reservation.ten_khach}</h3>
+                                        <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                            <span><i class="fas fa-phone mr-1"></i>${reservation.sdt}</span>
+                                            ${reservation.email ? `<span><i class="fas fa-envelope mr-1"></i>${reservation.email}</span>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                    <div class="flex items-center text-gray-600">
+                                        <i class="fas fa-calendar-alt mr-2 text-blue-500"></i>
+                                        <span>${formatDate(reservation.ngay)}</span>
+                                    </div>
+                                    <div class="flex items-center text-gray-600">
+                                        <i class="fas fa-clock mr-2 text-green-500"></i>
+                                        <span>${formatTime(reservation.gio)}</span>
+                                    </div>
+                                    <div class="flex items-center text-gray-600">
+                                        <i class="fas fa-users mr-2 text-purple-500"></i>
+                                        <span>${reservation.so_luong_khach} người</span>
+                                    </div>
+                                    <div class="flex items-center text-gray-600">
+                                        <i class="fas fa-clock mr-2 text-gray-400"></i>
+                                        <span>${formatDateTime(reservation.created_at)}</span>
+                                    </div>
+                                </div>
+
+                                ${reservation.ghi_chu ? `
+                                    <div class="mt-3 p-3 bg-gray-50 rounded-lg">
+                                        <p class="text-sm text-gray-600">
+                                            <i class="fas fa-sticky-note mr-2 text-yellow-500"></i>
+                                            ${reservation.ghi_chu}
+                                        </p>
+                                    </div>
+                                ` : ''}
+                            </div>
+
+                            <div class="flex-shrink-0 ml-6 flex flex-col items-end space-y-2">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusClass}">
+                                    <i class="fas ${statusIcon} mr-2"></i>
+                                    ${statusText}
+                                </span>
+                                <button onclick="printSingleTicket(${reservation.id_datban}); event.stopPropagation();"
+                                        class="bg-purple-600 text-white px-3 py-1 rounded text-xs hover:bg-purple-700 transition-colors">
+                                    <i class="fas fa-print mr-1"></i>In phiếu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = reservationsHTML;
+        }
+
+        // Utility functions
+        function getStatusClass(status) {
+            switch (status) {
+                case 'cho_xac_nhan': return 'status-pending bg-yellow-50 text-yellow-800';
+                case 'da_xac_nhan': return 'status-confirmed bg-green-50 text-green-800';
+                case 'da_huy': return 'status-cancelled bg-red-50 text-red-800';
+                default: return 'bg-gray-50 text-gray-800';
+            }
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                case 'cho_xac_nhan': return 'Chờ xác nhận';
+                case 'da_xac_nhan': return 'Đã xác nhận';
+                case 'da_huy': return 'Đã hủy';
+                default: return 'Không xác định';
+            }
+        }
+
+        function getStatusIcon(status) {
+            switch (status) {
+                case 'cho_xac_nhan': return 'fa-hourglass-half';
+                case 'da_xac_nhan': return 'fa-check-circle';
+                case 'da_huy': return 'fa-times-circle';
+                default: return 'fa-question-circle';
+            }
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+
+        function formatTime(timeString) {
+            return timeString.substring(0, 5); // HH:MM
+        }
+
+        function formatDateTime(dateTimeString) {
+            const date = new Date(dateTimeString);
+            return date.toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Filter functions
+        function filterByStatus(status) {
+            currentFilter = status;
+            currentPage = 1; // Reset to first page
+
+            // Update active filter button
+            document.querySelectorAll('.filter-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-status="${status}"]`).classList.add('active');
+
+            // Reload reservations with new filter
+            loadReservations();
+        }
+
+        // Show/hide loading state
+        function showLoading(show) {
+            const loadingState = document.getElementById('loadingState');
+            const container = document.getElementById('reservationsContainer');
+
+            if (show) {
+                loadingState.classList.remove('hidden');
+                container.innerHTML = '';
+            } else {
+                loadingState.classList.add('hidden');
+            }
+        }
+
+        // Show reservation detail modal
+        function showReservationDetail(reservationId) {
+            const reservation = allReservations.find(res => res.id_datban === reservationId);
+            if (!reservation) return;
+
+            const modalContent = document.getElementById('modalContent');
+            const statusClass = getStatusClass(reservation.trang_thai);
+            const statusText = getStatusText(reservation.trang_thai);
+            const statusIcon = getStatusIcon(reservation.trang_thai);
+
+            modalContent.innerHTML = `
+                <div class="space-y-6">
+                    <!-- Status Badge -->
+                    <div class="text-center">
+                        <span class="inline-flex items-center px-4 py-2 rounded-full text-lg font-medium ${statusClass}">
+                            <i class="fas ${statusIcon} mr-2"></i>
+                            ${statusText}
+                        </span>
+                    </div>
+
+                    <!-- Customer Information -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-user mr-2 text-blue-600"></i>
+                            Thông tin khách hàng
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Họ tên</label>
+                                <p class="text-gray-900 font-medium">${reservation.ten_khach}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Số điện thoại</label>
+                                <p class="text-gray-900 font-medium">${reservation.sdt}</p>
+                            </div>
+                            ${reservation.email ? `
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-600 mb-1">Email</label>
+                                    <p class="text-gray-900 font-medium">${reservation.email}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Reservation Details -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-calendar-check mr-2 text-green-600"></i>
+                            Chi tiết đặt bàn
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Ngày</label>
+                                <p class="text-gray-900 font-medium">${formatDate(reservation.ngay)}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Giờ</label>
+                                <p class="text-gray-900 font-medium">${formatTime(reservation.gio)}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Số lượng khách</label>
+                                <p class="text-gray-900 font-medium">${reservation.so_luong_khach} người</p>
+                            </div>
+                        </div>
+
+                        ${reservation.ghi_chu ? `
+                            <div class="mt-4">
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Ghi chú</label>
+                                <div class="bg-white p-3 rounded border">
+                                    <p class="text-gray-900">${reservation.ghi_chu}</p>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <!-- System Information -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-info-circle mr-2 text-purple-600"></i>
+                            Thông tin hệ thống
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Mã đặt bàn</label>
+                                <p class="text-gray-900 font-medium">#${reservation.id_datban.toString().padStart(6, '0')}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Thời gian tạo</label>
+                                <p class="text-gray-900 font-medium">${formatDateTime(reservation.created_at)}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-1">Cập nhật lần cuối</label>
+                                <p class="text-gray-900 font-medium">${formatDateTime(reservation.updated_at)}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex justify-center space-x-4 pt-4 border-t border-gray-200">
+                        <!-- Print Ticket Button (Always visible) -->
+                        <button onclick="printSingleTicket(${reservation.id_datban})"
+                                class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-print mr-2"></i>In phiếu
+                        </button>
+
+                        <!-- Admin Only Buttons -->
+                        ${adminAuth.isAdmin() ? `
+                            ${reservation.trang_thai === 'cho_xac_nhan' ? `
+                                <button onclick="updateReservationStatus(${reservation.id_datban}, 'da_xac_nhan')"
+                                        class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                                    <i class="fas fa-check mr-2"></i>Xác nhận
+                                </button>
+                                <button onclick="updateReservationStatus(${reservation.id_datban}, 'da_huy')"
+                                        class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                                    <i class="fas fa-times mr-2"></i>Hủy bỏ
+                                </button>
+                            ` : ''}
+                            ${reservation.trang_thai === 'da_xac_nhan' ? `
+                                <button onclick="updateReservationStatus(${reservation.id_datban}, 'da_huy')"
+                                        class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                                    <i class="fas fa-times mr-2"></i>Hủy bỏ
+                                </button>
+                            ` : ''}
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('reservationModal').classList.remove('hidden');
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('reservationModal').classList.add('hidden');
+        }
+
+        // Update reservation status (Admin only)
+        async function updateReservationStatus(reservationId, newStatus) {
+            if (!adminAuth.isAdmin()) {
+                alert('Bạn không có quyền thực hiện thao tác này!');
+                return;
+            }
+
+            const actionText = newStatus === 'da_xac_nhan' ? 'xác nhận' : 'hủy';
+
+            if (confirm(`Bạn có chắc chắn muốn ${actionText} đặt bàn này?`)) {
+                try {
+                    showLoading(true);
+
+                    // Call API to update status
+                    const response = await fetch(`http://localhost:3000/api/datban/${reservationId}/status`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            trang_thai: newStatus
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Refresh display
+                        await loadReservations();
+                        closeModal();
+                        showSuccess(`✅ Đã ${actionText} đặt bàn thành công!`);
+                    } else {
+                        showError('❌ Lỗi: ' + result.message);
+                    }
+
+                } catch (error) {
+                    console.error('❌ Error updating status:', error);
+                    showError('❌ Lỗi kết nối: ' + error.message);
+                } finally {
+                    showLoading(false);
+                }
+            }
+        }
+
+        // Navigation functions
+        function goToInvoices() {
+            window.location.href = 'DanhSachHoaDon.html';
+        }
+
+        function goToMenu() {
+            window.location.href = 'menu.html';
+        }
+
+        function logout() {
+            if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                adminAuth.logout();
+            }
+        }
+
+        function refreshReservations() {
+            loadReservations();
+        }
+
+        // Print reservations list
+        function printReservationsList() {
+            // Update print date
+            const now = new Date();
+            const printDate = now.toLocaleDateString('vi-VN', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            document.getElementById('printDate').textContent = `Ngày in: ${printDate}`;
+
+            // Create print summary with current filter info
+            const total = document.getElementById('totalReservations').textContent;
+            const pending = document.getElementById('pendingReservations').textContent;
+            const confirmed = document.getElementById('confirmedReservations').textContent;
+            const cancelled = document.getElementById('cancelledReservations').textContent;
+
+            // Get current filter info
+            const currentFilterText = document.querySelector('.filter-tab.active').textContent.trim();
+            const dateFilter = document.getElementById('dateFilter').value;
+            const searchFilter = document.getElementById('searchInput').value.trim();
+
+            let filterInfo = `<div style="margin: 10px 0; font-size: 12px;">`;
+            filterInfo += `<strong>Bộ lọc hiện tại:</strong> ${currentFilterText}`;
+            if (dateFilter) {
+                filterInfo += ` | Ngày: ${new Date(dateFilter).toLocaleDateString('vi-VN')}`;
+            }
+            if (searchFilter) {
+                filterInfo += ` | Tìm kiếm: "${searchFilter}"`;
+            }
+            filterInfo += `</div>`;
+
+            const summaryHTML = `
+                ${filterInfo}
+                <div style="display: flex; justify-content: space-around; border: 1px solid #000; padding: 10px; margin: 10px 0;">
+                    <div><strong>Tổng cộng:</strong> ${total}</div>
+                    <div><strong>Chờ xác nhận:</strong> ${pending}</div>
+                    <div><strong>Đã xác nhận:</strong> ${confirmed}</div>
+                    <div><strong>Đã hủy:</strong> ${cancelled}</div>
+                </div>
+                <div style="margin: 10px 0; font-size: 12px; text-align: center;">
+                    <strong>Hiển thị:</strong> ${allReservations.length} đặt bàn
+                </div>
+            `;
+            document.getElementById('printSummary').innerHTML = summaryHTML;
+
+            // Hide elements that shouldn't be printed
+            const elementsToHide = [
+                'loadingState',
+                'emptyState',
+                'paginationContainer'
+            ];
+
+            elementsToHide.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.style.display = 'none';
+                }
+            });
+
+            // Show print confirmation
+            if (confirm('Bạn có muốn in danh sách đặt bàn hiện tại không?')) {
+                // Trigger print
+                window.print();
+            }
+
+            // Restore hidden elements after printing
+            setTimeout(() => {
+                elementsToHide.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.style.display = '';
+                    }
+                });
+            }, 1000);
+        }
+
+        // Export reservations to CSV
+        function exportToCSV() {
+            if (allReservations.length === 0) {
+                alert('Không có dữ liệu để xuất!');
+                return;
+            }
+
+            // Create CSV header
+            const headers = [
+                'STT',
+                'Mã đặt bàn',
+                'Tên khách',
+                'Số điện thoại',
+                'Email',
+                'Ngày',
+                'Giờ',
+                'Số lượng khách',
+                'Trạng thái',
+                'Ghi chú',
+                'Ngày tạo'
+            ];
+
+            // Create CSV content
+            let csvContent = headers.join(',') + '\n';
+
+            allReservations.forEach((reservation, index) => {
+                const row = [
+                    index + 1,
+                    `#${reservation.id_datban.toString().padStart(6, '0')}`,
+                    `"${reservation.ten_khach}"`,
+                    reservation.sdt,
+                    reservation.email || '',
+                    formatDate(reservation.ngay),
+                    formatTime(reservation.gio),
+                    reservation.so_luong_khach,
+                    getStatusText(reservation.trang_thai),
+                    `"${reservation.ghi_chu || ''}"`,
+                    formatDateTime(reservation.created_at)
+                ];
+                csvContent += row.join(',') + '\n';
+            });
+
+            // Create and download file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+
+            const now = new Date();
+            const fileName = `danh-sach-dat-ban-${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')}.csv`;
+            link.setAttribute('download', fileName);
+
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showSuccess(`✅ Đã xuất ${allReservations.length} đặt bàn ra file ${fileName}`);
+        }
+
+        // Print single reservation ticket
+        function printSingleTicket(reservationId) {
+            const reservation = allReservations.find(res => res.id_datban === reservationId);
+            if (!reservation) {
+                alert('Không tìm thấy thông tin đặt bàn!');
+                return;
+            }
+
+            // Fill ticket template with reservation data
+            const ticketId = `#${reservation.id_datban.toString().padStart(6, '0')}`;
+            document.getElementById('ticket-id').textContent = ticketId;
+            document.getElementById('ticket-customer-name').textContent = reservation.ten_khach;
+            document.getElementById('ticket-phone').textContent = reservation.sdt;
+            document.getElementById('ticket-email').textContent = reservation.email || 'Không có';
+            document.getElementById('ticket-date').textContent = formatDate(reservation.ngay);
+            document.getElementById('ticket-time').textContent = formatTime(reservation.gio);
+            document.getElementById('ticket-guests').textContent = `${reservation.so_luong_khach} người`;
+            document.getElementById('ticket-status').textContent = getStatusText(reservation.trang_thai);
+            document.getElementById('ticket-notes').textContent = reservation.ghi_chu || 'Không có';
+            document.getElementById('ticket-created').textContent = formatDateTime(reservation.created_at);
+
+            // Generate ticket code
+            const ticketCode = `DB${reservation.id_datban}${new Date().getFullYear()}`;
+            document.getElementById('ticket-code').textContent = ticketCode;
+
+            // Set print time
+            const now = new Date();
+            const printTime = now.toLocaleString('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('ticket-print-time').textContent = printTime;
+
+            // Style status badge based on status
+            const statusBadge = document.getElementById('ticket-status');
+            statusBadge.className = 'status-badge';
+            switch (reservation.trang_thai) {
+                case 'cho_xac_nhan':
+                    statusBadge.style.backgroundColor = '#fef3c7';
+                    statusBadge.style.color = '#92400e';
+                    break;
+                case 'da_xac_nhan':
+                    statusBadge.style.backgroundColor = '#d1fae5';
+                    statusBadge.style.color = '#065f46';
+                    break;
+                case 'da_huy':
+                    statusBadge.style.backgroundColor = '#fee2e2';
+                    statusBadge.style.color = '#991b1b';
+                    break;
+            }
+
+            // Show ticket template
+            const ticketTemplate = document.getElementById('printTicketTemplate');
+            ticketTemplate.classList.add('active');
+
+            // Hide main content
+            const mainContent = document.querySelector('.container');
+            const originalDisplay = mainContent.style.display;
+            mainContent.style.display = 'none';
+
+            // Print
+            if (confirm(`Bạn có muốn in phiếu đặt bàn #${reservation.id_datban.toString().padStart(6, '0')} không?`)) {
+                window.print();
+            }
+
+            // Restore main content and hide ticket
+            setTimeout(() => {
+                mainContent.style.display = originalDisplay;
+                ticketTemplate.classList.remove('active');
+            }, 500);
+        }
+
+        // Print all tickets for current reservations
+        function printAllTickets() {
+            if (allReservations.length === 0) {
+                alert('Không có đặt bàn nào để in!');
+                return;
+            }
+
+            if (!confirm(`Bạn có muốn in tất cả ${allReservations.length} phiếu đặt bàn hiện tại không?\n\nLưu ý: Điều này sẽ tạo ra nhiều trang in.`)) {
+                return;
+            }
+
+            // Create a container for all tickets
+            const allTicketsContainer = document.createElement('div');
+            allTicketsContainer.style.display = 'none';
+            allTicketsContainer.id = 'allTicketsContainer';
+
+            allReservations.forEach((reservation, index) => {
+                // Clone the ticket template
+                const ticketClone = document.getElementById('printTicketTemplate').cloneNode(true);
+                ticketClone.id = `ticket-${reservation.id_datban}`;
+                ticketClone.classList.add('active');
+
+                // Add page break except for last ticket
+                if (index < allReservations.length - 1) {
+                    ticketClone.style.pageBreakAfter = 'always';
+                }
+
+                // Fill with reservation data
+                const ticketId = `#${reservation.id_datban.toString().padStart(6, '0')}`;
+                ticketClone.querySelector('#ticket-id').textContent = ticketId;
+                ticketClone.querySelector('#ticket-customer-name').textContent = reservation.ten_khach;
+                ticketClone.querySelector('#ticket-phone').textContent = reservation.sdt;
+                ticketClone.querySelector('#ticket-email').textContent = reservation.email || 'Không có';
+                ticketClone.querySelector('#ticket-date').textContent = formatDate(reservation.ngay);
+                ticketClone.querySelector('#ticket-time').textContent = formatTime(reservation.gio);
+                ticketClone.querySelector('#ticket-guests').textContent = `${reservation.so_luong_khach} người`;
+                ticketClone.querySelector('#ticket-status').textContent = getStatusText(reservation.trang_thai);
+                ticketClone.querySelector('#ticket-notes').textContent = reservation.ghi_chu || 'Không có';
+                ticketClone.querySelector('#ticket-created').textContent = formatDateTime(reservation.created_at);
+
+                // Generate ticket code
+                const ticketCode = `DB${reservation.id_datban}${new Date().getFullYear()}`;
+                ticketClone.querySelector('#ticket-code').textContent = ticketCode;
+
+                // Set print time
+                const now = new Date();
+                const printTime = now.toLocaleString('vi-VN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                ticketClone.querySelector('#ticket-print-time').textContent = printTime;
+
+                // Style status badge
+                const statusBadge = ticketClone.querySelector('#ticket-status');
+                statusBadge.className = 'status-badge';
+                switch (reservation.trang_thai) {
+                    case 'cho_xac_nhan':
+                        statusBadge.style.backgroundColor = '#fef3c7';
+                        statusBadge.style.color = '#92400e';
+                        break;
+                    case 'da_xac_nhan':
+                        statusBadge.style.backgroundColor = '#d1fae5';
+                        statusBadge.style.color = '#065f46';
+                        break;
+                    case 'da_huy':
+                        statusBadge.style.backgroundColor = '#fee2e2';
+                        statusBadge.style.color = '#991b1b';
+                        break;
+                }
+
+                allTicketsContainer.appendChild(ticketClone);
+            });
+
+            // Add to document
+            document.body.appendChild(allTicketsContainer);
+
+            // Hide main content
+            const mainContent = document.querySelector('.container');
+            const originalDisplay = mainContent.style.display;
+            mainContent.style.display = 'none';
+
+            // Show all tickets
+            allTicketsContainer.style.display = 'block';
+
+            // Print
+            window.print();
+
+            // Cleanup
+            setTimeout(() => {
+                mainContent.style.display = originalDisplay;
+                document.body.removeChild(allTicketsContainer);
+            }, 1000);
+
+            showSuccess(`✅ Đã in ${allReservations.length} phiếu đặt bàn!`);
+        }
+
+        // Show error message
+        function showError(message) {
+            // Create error toast
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+
+            document.body.appendChild(toast);
+
+            // Show toast
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full');
+            }, 100);
+
+            // Hide toast after 5 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 5000);
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            // Create success toast
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+
+            document.body.appendChild(toast);
+
+            // Show toast
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full');
+            }, 100);
+
+            // Hide toast after 3 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('reservationModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

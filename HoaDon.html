@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hóa Đơn - Ẩm Thực Phương Nam</title>
+    <link rel="icon" href="img/logoPN.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="js/admin-auth.js"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            .print-container { box-shadow: none !important; margin: 0 !important; }
+        }
+        
+        .invoice-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-confirmed {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-completed {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-cancelled {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="invoice-header text-white py-6 no-print">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-receipt text-3xl"></i>
+                    <div>
+                        <h1 class="text-2xl font-bold">Hóa Đơn Thanh Toán</h1>
+                        <p class="text-blue-100">Ẩm Thực Phương Nam</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <button onclick="window.print()" class="bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors">
+                        <i class="fas fa-print mr-2"></i>In Hóa Đơn
+                    </button>
+                    <button onclick="goToInvoiceList()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-list mr-2"></i>Danh Sách Hóa Đơn
+                    </button>
+                    <button onclick="goBack()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>Quay Lại
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="print-container max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+            <!-- Invoice Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h2 class="text-3xl font-bold mb-2">HÓA ĐƠN</h2>
+                        <p class="text-blue-100">Nhà Hàng Ẩm Thực Phương Nam</p>
+                        <p class="text-blue-100 text-sm">📍 123 Đường ABC, Xã / Phường, Tỉnh</p>
+                        <p class="text-blue-100 text-sm">📞 0123 456 789 | 📧 info@amthucphuongnam.com</p>
+                    </div>
+                    <div class="text-right">
+                        <div id="invoiceNumber" class="text-2xl font-bold mb-2">HD000001</div>
+                        <div id="invoiceDate" class="text-blue-100"></div>
+                        <div id="invoiceStatus" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Info -->
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-user text-blue-600 mr-2"></i>Thông Tin Khách Hàng
+                </h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <span class="font-medium text-gray-600 w-24">Họ tên:</span>
+                                <span id="customerName" class="text-gray-800">-</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="font-medium text-gray-600 w-24">Email:</span>
+                                <span id="customerEmail" class="text-gray-800">-</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="font-medium text-gray-600 w-24">Điện thoại:</span>
+                                <span id="customerPhone" class="text-gray-800">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <span class="font-medium text-gray-600 w-32">Loại đơn:</span>
+                                <span id="orderType" class="text-gray-800">-</span>
+                            </div>
+                            <div id="deliveryAddressSection" class="hidden">
+                                <div class="flex items-start">
+                                    <span class="font-medium text-gray-600 w-32">Địa chỉ giao:</span>
+                                    <span id="deliveryAddress" class="text-gray-800">-</span>
+                                </div>
+                            </div>
+                            <div id="notesSection" class="hidden">
+                                <div class="flex items-start">
+                                    <span class="font-medium text-gray-600 w-32">Ghi chú:</span>
+                                    <span id="orderNotes" class="text-gray-800">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Details -->
+            <div class="p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-utensils text-blue-600 mr-2"></i>Chi Tiết Đơn Hàng
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">STT</th>
+                                <th class="border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">Tên Món</th>
+                                <th class="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">Số Lượng</th>
+                                <th id="priceHeader" class="border border-gray-200 px-4 py-3 text-right font-semibold text-gray-700">Đơn Giá</th>
+                                <th id="totalHeader" class="border border-gray-200 px-4 py-3 text-right font-semibold text-gray-700">Thành Tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderItemsTable">
+                            <!-- Items will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Total Section -->
+                <div id="totalSection" class="mt-6 border-t border-gray-200 pt-4">
+                    <div class="flex justify-end">
+                        <div class="w-full max-w-sm space-y-2">
+                            <div class="flex justify-between text-gray-600">
+                                <span>Tạm tính:</span>
+                                <span id="subtotal">0 ₫</span>
+                            </div>
+                            <div class="flex justify-between text-gray-600">
+                                <span>Phí giao hàng:</span>
+                                <span id="shippingFee">0 ₫</span>
+                            </div>
+                            <div class="flex justify-between text-gray-600">
+                                <span>Giảm giá:</span>
+                                <span id="discount">0 ₫</span>
+                            </div>
+                            <hr class="border-gray-300">
+                            <div class="flex justify-between text-xl font-bold text-gray-800">
+                                <span>Tổng cộng:</span>
+                                <span id="totalAmount" class="text-blue-600">0 ₫</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Info -->
+            <div class="bg-gray-50 p-6 border-t border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-credit-card text-blue-600 mr-2"></i>Thông Tin Thanh Toán
+                </h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <span class="font-medium text-gray-600 w-32">Phương thức:</span>
+                                <span id="paymentMethod" class="text-gray-800">Tiền mặt</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="font-medium text-gray-600 w-32">Trạng thái:</span>
+                                <span id="paymentStatus" class="status-badge status-pending">
+                                    <i class="fas fa-clock mr-1"></i>Chờ thanh toán
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-600 mb-2">Cảm ơn quý khách đã sử dụng dịch vụ!</p>
+                        <p class="text-sm text-gray-600">Hóa đơn được tạo tự động bởi hệ thống</p>
+                    </div>
+                </div>
+
+                <!-- Transfer Proof Section -->
+                <div id="transferProofSection" class="hidden mt-6 pt-4 border-t border-gray-300">
+                    <h4 class="text-md font-semibold text-gray-800 mb-3">
+                        <i class="fas fa-image text-blue-600 mr-2"></i>Hình Ảnh Chuyển Khoản
+                    </h4>
+                    <div class="bg-white rounded-lg border border-gray-200 p-4">
+                        <div class="text-center">
+                            <img id="transferProofImage" src="" alt="Hình ảnh chuyển khoản"
+                                 class="max-w-full max-h-64 object-contain mx-auto rounded-lg border border-gray-300"
+                                 onclick="openImageModal(this.src)">
+                            <p class="text-xs text-gray-500 mt-2">Click vào hình ảnh để xem kích thước đầy đủ</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="max-w-4xl mx-auto mt-6 flex flex-wrap justify-center gap-4 no-print">
+            <button onclick="goToInvoiceList()" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors">
+                <i class="fas fa-list mr-2"></i>Danh Sách Hóa Đơn
+            </button>
+            <button onclick="goToMenu()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                <i class="fas fa-utensils mr-2"></i>Đặt Món Khác
+            </button>
+            <button onclick="goToHome()" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
+                <i class="fas fa-home mr-2"></i>Về Trang Chủ
+            </button>
+        </div>
+    </main>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 text-center">
+            <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-4"></i>
+            <p class="text-gray-700">Đang tải thông tin hóa đơn...</p>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorState" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 text-center max-w-md mx-4">
+            <i class="fas fa-exclamation-triangle text-3xl text-red-600 mb-4"></i>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">Không tìm thấy hóa đơn</h3>
+            <p class="text-gray-600 mb-4">Không có thông tin hóa đơn để hiển thị.</p>
+            <button onclick="goToHome()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                Về Trang Chủ
+            </button>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+        <div class="relative max-w-4xl max-h-[90vh] mx-4">
+            <button onclick="closeImageModal()" class="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+            <img id="modalImage" src="" alt="Hình ảnh chuyển khoản" class="max-w-full max-h-full object-contain rounded-lg">
+        </div>
+    </div>
+
+    <script>
+        let adminAuth;
+
+        // Initialize admin auth and check permissions
+        document.addEventListener('DOMContentLoaded', function() {
+            adminAuth = new AdminAuth();
+
+            // Check if user has permission to view prices
+            if (!adminAuth.isLoggedIn()) {
+                // Redirect to login if not logged in
+                window.location.href = 'admin-login.html';
+                return;
+            }
+
+            // Hide price information for staff
+            if (!adminAuth.isAdmin()) {
+                hidePriceInformation();
+            }
+
+            // Load invoice data
+            loadInvoiceData();
+        });
+
+        // Hide price information for staff
+        function hidePriceInformation() {
+            // Hide price columns in table
+            const priceHeader = document.getElementById('priceHeader');
+            const totalHeader = document.getElementById('totalHeader');
+            if (priceHeader) priceHeader.style.display = 'none';
+            if (totalHeader) totalHeader.style.display = 'none';
+
+            // Hide total section
+            const totalSection = document.getElementById('totalSection');
+            if (totalSection) totalSection.style.display = 'none';
+
+            // Add CSS to hide price columns in table rows
+            const style = document.createElement('style');
+            style.textContent = `
+                .price-column { display: none !important; }
+                @media print {
+                    .price-column { display: none !important; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Utility functions
+        function formatPrice(price) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(price);
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function generateInvoiceNumber() {
+            const timestamp = Date.now();
+            const random = Math.floor(Math.random() * 1000);
+            return `HD${timestamp.toString().slice(-6)}${random.toString().padStart(3, '0')}`;
+        }
+
+        // Navigation functions
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                goToHome();
+            }
+        }
+
+        function goToMenu() {
+            window.location.href = 'Menu-new.html';
+        }
+
+        function goToHome() {
+            window.location.href = 'Index-new.html';
+        }
+
+        function goToInvoiceList() {
+            window.location.href = 'DanhSachHoaDon.html';
+        }
+
+        // Load invoice data
+        function loadInvoiceData() {
+            try {
+                // Get order data from localStorage (set by ThanhToan.html)
+                const orderData = localStorage.getItem('currentOrder');
+                const customerData = localStorage.getItem('checkoutCustomerInfo');
+
+                console.log('🔍 Loading invoice data...');
+                console.log('📋 Order data:', orderData ? 'Found' : 'Not found');
+                console.log('👤 Customer data:', customerData ? 'Found' : 'Not found');
+
+                if (!orderData) {
+                    console.error('❌ No order data found');
+                    showError();
+                    return;
+                }
+
+                const order = JSON.parse(orderData);
+                const customer = customerData ? JSON.parse(customerData) : null;
+
+                console.log('✅ Parsed order:', order);
+                console.log('✅ Parsed customer:', customer);
+
+                // Populate invoice data
+                populateInvoiceData(order, customer);
+
+                // Hide loading state
+                document.getElementById('loadingState').style.display = 'none';
+
+            } catch (error) {
+                console.error('❌ Error loading invoice data:', error);
+                showError();
+            }
+        }
+
+        // Populate invoice with order data
+        function populateInvoiceData(order, customer) {
+            // Use invoice number from order or generate new one
+            const invoiceNumber = order.invoiceNumber || generateInvoiceNumber();
+            const invoiceDate = order.createdAt || new Date().toISOString();
+
+            // Set invoice header
+            document.getElementById('invoiceNumber').textContent = invoiceNumber;
+            document.getElementById('invoiceDate').textContent = formatDate(invoiceDate);
+
+            // Set status badge based on order status
+            const statusElement = document.getElementById('invoiceStatus');
+            let statusClass = 'status-confirmed';
+            let statusIcon = 'fa-check-circle';
+            let statusText = 'Đã xác nhận';
+
+            if (order.status === 'pending-approval' || order.paymentStatus === 'pending') {
+                statusClass = 'status-pending';
+                statusIcon = 'fa-clock';
+                statusText = 'Chờ duyệt';
+            } else if (order.status === 'completed') {
+                statusClass = 'status-completed';
+                statusIcon = 'fa-check-double';
+                statusText = 'Hoàn thành';
+            } else if (order.status === 'cancelled') {
+                statusClass = 'status-cancelled';
+                statusIcon = 'fa-times-circle';
+                statusText = 'Đã hủy';
+            }
+
+            statusElement.innerHTML = `
+                <span class="status-badge ${statusClass}">
+                    <i class="fas ${statusIcon} mr-1"></i>${statusText}
+                </span>
+            `;
+
+            // Set customer info
+            const customerInfo = order.customerInfo || customer;
+            if (customerInfo) {
+                document.getElementById('customerName').textContent = customerInfo.full_name || customerInfo.name || 'Khách hàng';
+                document.getElementById('customerEmail').textContent = customerInfo.email || '-';
+                document.getElementById('customerPhone').textContent = customerInfo.phone || '-';
+            } else {
+                document.getElementById('customerName').textContent = 'Khách hàng';
+                document.getElementById('customerEmail').textContent = '-';
+                document.getElementById('customerPhone').textContent = '-';
+            }
+
+            // Set order type and delivery info
+            const orderType = order.orderType || 'dine-in';
+            document.getElementById('orderType').textContent = orderType === 'delivery' || orderType === 'giao_hang' ? 'Giao hàng' : 'Tại chỗ';
+
+            if ((orderType === 'delivery' || orderType === 'giao_hang') && order.deliveryAddress) {
+                document.getElementById('deliveryAddressSection').classList.remove('hidden');
+                document.getElementById('deliveryAddress').textContent = order.deliveryAddress;
+            }
+
+            if (order.notes) {
+                document.getElementById('notesSection').classList.remove('hidden');
+                document.getElementById('orderNotes').textContent = order.notes;
+            }
+
+            // Populate order items
+            populateOrderItems(order.items || []);
+
+            // Set totals from order data
+            setTotalsFromOrder(order);
+
+            // Set payment info
+            let paymentMethodText = 'Tiền mặt';
+            if (order.paymentMethod === 'bank_transfer') {
+                paymentMethodText = 'Chuyển khoản ngân hàng';
+            } else if (order.paymentMethod === 'momo') {
+                paymentMethodText = 'MoMo';
+            } else if (order.paymentMethod === 'vnpay') {
+                paymentMethodText = 'VNPay';
+            } else if (order.paymentMethod === 'card') {
+                paymentMethodText = 'Thẻ tín dụng';
+            }
+            document.getElementById('paymentMethod').textContent = paymentMethodText;
+
+            // Set payment status
+            const paymentStatusElement = document.getElementById('paymentStatus');
+            if (order.paymentStatus === 'pending') {
+                paymentStatusElement.innerHTML = `
+                    <span class="status-badge status-pending">
+                        <i class="fas fa-clock mr-1"></i>Chờ xác nhận
+                    </span>
+                `;
+            } else if (order.paymentStatus === 'completed') {
+                paymentStatusElement.innerHTML = `
+                    <span class="status-badge status-completed">
+                        <i class="fas fa-check-circle mr-1"></i>Đã thanh toán
+                    </span>
+                `;
+            }
+
+            // Show transfer proof image if available
+            if (order.transfer_proof && order.paymentMethod === 'bank_transfer') {
+                const transferProofSection = document.getElementById('transferProofSection');
+                const transferProofImage = document.getElementById('transferProofImage');
+
+                transferProofSection.classList.remove('hidden');
+                transferProofImage.src = order.transfer_proof;
+
+                console.log('✅ Transfer proof image displayed');
+            }
+        }
+
+        // Open image modal
+        function openImageModal(imageSrc) {
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+
+            modalImage.src = imageSrc;
+            modal.classList.remove('hidden');
+        }
+
+        // Close image modal
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.add('hidden');
+        }
+
+        // Populate order items table
+        function populateOrderItems(items) {
+            const tableBody = document.getElementById('orderItemsTable');
+            tableBody.innerHTML = '';
+
+            console.log('📋 Populating order items:', items);
+
+            if (!items || items.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="border border-gray-200 px-4 py-8 text-center text-gray-500">
+                            Không có món ăn nào trong đơn hàng
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            items.forEach((item, index) => {
+                // Handle different data formats
+                const price = item.don_gia || item.gia || item.price || 0;
+                const quantity = item.so_luong || item.qty || item.quantity || 1;
+                const total = item.thanh_tien || (price * quantity);
+                const itemName = item.ten_mon || item.name || 'Món ăn';
+
+                console.log(`📦 Item ${index + 1}:`, {
+                    name: itemName,
+                    price: price,
+                    quantity: quantity,
+                    total: total
+                });
+
+                const row = document.createElement('tr');
+                row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+
+                // Check if user can see prices
+                const canViewPrices = adminAuth && adminAuth.isAdmin();
+
+                row.innerHTML = `
+                    <td class="border border-gray-200 px-4 py-3 text-center">${index + 1}</td>
+                    <td class="border border-gray-200 px-4 py-3">
+                        <div class="font-medium text-gray-800">${itemName}</div>
+                        ${item.mo_ta ? `<div class="text-sm text-gray-600">${item.mo_ta}</div>` : ''}
+                    </td>
+                    <td class="border border-gray-200 px-4 py-3 text-center">${quantity}</td>
+                    <td class="border border-gray-200 px-4 py-3 text-right price-column">${canViewPrices ? formatPrice(price) : '<i class="fas fa-lock text-gray-400"></i>'}</td>
+                    <td class="border border-gray-200 px-4 py-3 text-right font-medium price-column">${canViewPrices ? formatPrice(total) : '<i class="fas fa-lock text-gray-400"></i>'}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Set totals from order data
+        function setTotalsFromOrder(order) {
+            const subtotal = order.subtotal || 0;
+            const shippingFee = order.deliveryFee || 0;
+            const discount = 0; // No discount for now
+            const total = order.total || (subtotal + shippingFee - discount);
+
+            document.getElementById('subtotal').textContent = formatPrice(subtotal);
+            document.getElementById('shippingFee').textContent = formatPrice(shippingFee);
+            document.getElementById('discount').textContent = formatPrice(discount);
+            document.getElementById('totalAmount').textContent = formatPrice(total);
+        }
+
+        // Calculate totals (fallback function)
+        function calculateTotals(items, orderType) {
+            const subtotal = items.reduce((sum, item) => {
+                const price = item.don_gia || item.gia || item.price || 0;
+                const quantity = item.so_luong || item.qty || item.quantity || 1;
+                return sum + (price * quantity);
+            }, 0);
+
+            const shippingFee = (orderType === 'giao_hang' || orderType === 'delivery') ? 20000 : 0;
+            const discount = 0; // No discount for now
+            const total = subtotal + shippingFee - discount;
+
+            document.getElementById('subtotal').textContent = formatPrice(subtotal);
+            document.getElementById('shippingFee').textContent = formatPrice(shippingFee);
+            document.getElementById('discount').textContent = formatPrice(discount);
+            document.getElementById('totalAmount').textContent = formatPrice(total);
+        }
+
+        // Show error state
+        function showError() {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').classList.remove('hidden');
+        }
+
+        // Setup image modal event listener
+        document.addEventListener('DOMContentLoaded', function() {
+            // Close image modal when clicking outside
+            document.getElementById('imageModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeImageModal();
+                }
+            });
+        });
+    </script>
+
+    <!-- Floating Contact Buttons -->
+    <div id="floatingContact" class="fixed left-4 bottom-20 z-50 flex flex-col space-y-8">
+        <!-- Zalo Button -->
+        <div class="floating-btn zalo-btn group">
+            <a href="https://zalo.me/0374514494" target="_blank" class="relative block">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-2xl transform transition-all duration-500 group-hover:scale-125 group-hover:shadow-blue-500/50 group-hover:shadow-2xl border-2 border-blue-300/30">
+                    <div class="text-white font-bold text-lg tracking-wide drop-shadow-lg">
+                        Zalo
+                    </div>
+                </div>
+                <div class="absolute inset-0 rounded-full bg-blue-400 opacity-40 animate-ping"></div>
+                <div class="absolute inset-0 rounded-full bg-blue-300 opacity-25 animate-ping" style="animation-delay: 0.7s;"></div>
+            </a>
+        </div>
+
+        <!-- Phone Button -->
+        <div class="floating-btn phone-btn group">
+            <a href="tel:0374514494" class="relative block">
+                <div class="w-16 h-16 bg-gradient-to-br from-red-400 via-red-500 to-red-600 rounded-full flex items-center justify-center shadow-2xl transform transition-all duration-500 group-hover:scale-125 group-hover:shadow-red-500/50 group-hover:shadow-2xl border-2 border-red-300/30">
+                    <svg class="w-9 h-9 text-white drop-shadow-lg transform group-hover:rotate-12 group-hover:scale-110 transition-all duration-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                    </svg>
+                </div>
+                <div class="absolute inset-0 rounded-full bg-red-400 opacity-40 animate-ping"></div>
+                <div class="absolute inset-0 rounded-full bg-red-300 opacity-25 animate-ping" style="animation-delay: 0.6s;"></div>
+            </a>
+        </div>
+    </div>
+
+    <style>
+    .floating-btn {
+        position: relative;
+        animation: float 4s ease-in-out infinite;
+        filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.15));
+    }
+    .floating-btn:nth-child(1) { animation-delay: -0.5s; }
+    .floating-btn:nth-child(2) { animation-delay: -2s; }
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        25% { transform: translateY(-8px) rotate(1deg); }
+        50% { transform: translateY(-15px) rotate(0deg); }
+        75% { transform: translateY(-8px) rotate(-1deg); }
+    }
+    .zalo-btn:hover .w-16 {
+        box-shadow: 0 0 30px rgba(59, 130, 246, 0.8), 0 0 60px rgba(59, 130, 246, 0.4);
+    }
+    .phone-btn:hover .w-16 {
+        box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), 0 0 60px rgba(239, 68, 68, 0.4);
+    }
+    </style>
+
+</body>
+</html>

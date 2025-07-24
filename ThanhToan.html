@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Toán - Nhà Hàng Ẩm Thực Phương Nam</title>
+    <link rel="icon" href="img/logoPN.png" type="image/png">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #e53e3e;
+        }
+        .bg-primary { background-color: var(--primary-color); }
+        .text-primary { color: var(--primary-color); }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen py-8">
+    <div class="container mx-auto px-4">
+        <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+            <div class="text-center mb-6">
+                <a href="Menu-new.html" class="text-primary hover:underline">
+                    <i class="fas fa-arrow-left"></i> Quay lại Thực đơn
+                </a>
+                <h1 class="text-3xl font-bold text-gray-800 mt-2">THANH TOÁN ĐƠN HÀNG</h1>
+            </div>
+            
+            <!-- Thông tin khách hàng -->
+            <div class="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                <h2 class="text-xl font-semibold text-indigo-700 mb-2">Thông Tin Khách Hàng</h2>
+                <p><strong>Tên:</strong> <span id="customerName">Đang tải...</span></p>
+                <p><strong>Email:</strong> <span id="customerEmail">Đang tải...</span></p>
+                <p><strong>ID Khách hàng:</strong> <span id="customerId">Đang tải...</span></p>
+                <div class="mt-2 p-2 bg-green-100 border border-green-300 rounded">
+                    <i class="fas fa-info-circle text-green-600"></i>
+                    <span class="text-green-700 text-sm">Thông tin này sẽ được sử dụng tự động cho hóa đơn</span>
+                </div>
+            </div>
+
+            <!-- Giỏ hàng -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg border">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-700">Chi Tiết Đơn Hàng</h2>
+                    <div class="space-x-2">
+                        <button onclick="debugReloadCart()" class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600">
+                            <i class="fas fa-sync-alt mr-1"></i> Reload Cart
+                        </button>
+                        <button onclick="debugShowAllCarts()" class="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600">
+                            <i class="fas fa-users mr-1"></i> Show All Carts
+                        </button>
+                        <button onclick="cleanupGuestCarts()" class="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600">
+                            <i class="fas fa-trash mr-1"></i> Clean Guest Carts
+                        </button>
+                    </div>
+                </div>
+                <div id="cartItems" class="space-y-3">
+                    <!-- Items will be loaded here -->
+                </div>
+                <div class="mt-4 pt-4 border-t space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Tạm tính:</span>
+                        <span id="subtotal" class="font-semibold">185,000đ</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Phí giao hàng:</span>
+                        <span id="deliveryFee" class="font-semibold">0đ</span>
+                    </div>
+                    <div class="flex justify-between text-xl font-bold border-t pt-2 mt-2">
+                        <span class="text-gray-800">Tổng cộng:</span>
+                        <span id="totalAmount" class="text-red-600">185,000đ</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form thanh toán -->
+            <form id="paymentForm" class="space-y-6">
+                <!-- Phương thức nhận hàng -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">Phương Thức Nhận Hàng</h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="radio" name="orderType" value="tai_cho" checked class="mr-2">
+                            <i class="fas fa-utensils mr-2"></i>
+                            <span>Ăn tại nhà hàng</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="orderType" value="giao_hang" class="mr-2">
+                            <i class="fas fa-truck mr-2"></i>
+                            <span>Giao hàng tận nơi (+20,000đ)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Địa chỉ giao hàng -->
+                <div id="deliveryAddressSection" class="hidden">
+                    <label for="deliveryAddress" class="block text-sm font-medium text-gray-700 mb-2">
+                        Địa chỉ giao hàng
+                    </label>
+                    <textarea id="deliveryAddress" name="deliveryAddress" rows="3" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                              placeholder="Nhập địa chỉ giao hàng chi tiết..."></textarea>
+                </div>
+
+                <!-- Phương thức thanh toán -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">Phương Thức Thanh Toán</h3>
+                    <div class="space-y-3">
+                        <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input type="radio" name="paymentMethod" value="cash" checked class="mr-3">
+                            <i class="fas fa-money-bill-wave text-green-600 mr-3"></i>
+                            <div>
+                                <span class="font-medium">Thanh toán tiền mặt</span>
+                                <p class="text-sm text-gray-500">Thanh toán khi nhận hàng</p>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input type="radio" name="paymentMethod" value="bank_transfer" class="mr-3">
+                            <i class="fas fa-university text-blue-600 mr-3"></i>
+                            <div>
+                                <span class="font-medium">Chuyển khoản ngân hàng</span>
+                                <p class="text-sm text-gray-500">Chuyển khoản trước khi nhận hàng</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Thông tin chuyển khoản -->
+                <div id="bankTransferSection" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-blue-800 mb-3">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Thông Tin Chuyển Khoản
+                    </h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Ngân hàng:</span>
+                            <span class="font-medium">Vietcombank</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Số tài khoản:</span>
+                            <span class="font-medium">1234567890</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Chủ tài khoản:</span>
+                            <span class="font-medium">Nhà Hàng Ẩm Thực Phương Nam</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Nội dung:</span>
+                            <span class="font-medium" id="transferContent">HD000001 - Tên khách hàng</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Số tiền:</span>
+                            <span class="font-bold text-red-600" id="transferAmount">0đ</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                        <p class="text-sm text-yellow-800">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            <strong>Lưu ý:</strong> Vui lòng chuyển khoản đúng số tiền và nội dung.
+                            Đơn hàng sẽ được xử lý sau khi nhận được thanh toán.
+                        </p>
+                    </div>
+
+                    <!-- Upload ảnh chuyển khoản -->
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-camera mr-2"></i>
+                            Tải lên ảnh chuyển khoản <span class="text-red-500">*</span>
+                        </label>
+                        <input type="file" id="transferProof" name="transferProof" accept="image/*"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <p class="text-xs text-red-600 mt-1">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            <strong>Bắt buộc:</strong> Vui lòng tải lên ảnh chuyển khoản để xác nhận thanh toán
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">Hỗ trợ: JPG, PNG, GIF (tối đa 5MB)</p>
+                    </div>
+                </div>
+
+                <!-- Ghi chú -->
+                <div>
+                    <label for="orderNotes" class="block text-sm font-medium text-gray-700 mb-2">
+                        Ghi chú đơn hàng (tùy chọn)
+                    </label>
+                    <textarea id="orderNotes" name="orderNotes" rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                              placeholder="Ghi chú về đơn hàng..."></textarea>
+                </div>
+
+                <!-- Nút thanh toán -->
+                <button type="submit" id="submitOrderBtn" 
+                        class="w-full bg-red-600 text-white py-3 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 font-semibold text-lg">
+                    <i class="fas fa-credit-card mr-2"></i>
+                    Xác Nhận Thanh Toán
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-8 max-w-md mx-4 text-center">
+            <div class="mb-6">
+                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-check text-green-600 text-3xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Cảm ơn bạn đã sử dụng dịch vụ!</h2>
+                <p class="text-gray-600 mb-4">Mã hóa đơn: <span id="invoiceNumber" class="font-semibold text-blue-600">#HD000001</span></p>
+            </div>
+
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                <div class="flex items-center justify-center mb-2">
+                    <i class="fas fa-heart text-red-500 mr-2"></i>
+                    <span class="font-semibold text-green-800">Cảm ơn bạn đã tin tưởng nhà hàng!</span>
+                </div>
+                <p class="text-sm text-green-700">
+                    Đơn hàng của bạn đã được ghi nhận và đang chờ nhân viên xác nhận. Chúng tôi sẽ liên hệ với bạn sớm nhất để thông báo tình trạng đơn hàng.
+                </p>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="closeSuccessModal()"
+                        class="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 transition-colors duration-300 font-semibold">
+                    <i class="fas fa-utensils mr-2"></i>
+                    Quay lại Menu
+                </button>
+                <div class="text-sm text-gray-500">
+                    <p>Chúng tôi rất trân trọng sự ủng hộ của bạn! 🙏</p>
+                    <p id="autoRedirectCountdown" class="mt-2 text-xs">
+                        Tự động quay lại menu sau <span id="countdownTimer">10</span> giây...
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating contact buttons -->
+    <div class="fixed left-4 bottom-4 space-y-4 z-50">
+        <div class="floating-btn">
+            <a href="tel:+84123456789" class="phone-btn block">
+                <div class="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white text-2xl hover:bg-red-600 transition-all duration-300 shadow-lg">
+                    <i class="fas fa-phone"></i>
+                </div>
+            </a>
+        </div>
+        <div class="floating-btn">
+            <a href="https://zalo.me/0123456789" target="_blank" class="zalo-btn block">
+                <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl hover:bg-blue-600 transition-all duration-300 shadow-lg">
+                    <i class="fab fa-facebook-messenger"></i>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <style>
+    .floating-btn {
+        position: relative;
+        animation: float 4s ease-in-out infinite;
+        filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.15));
+    }
+    .floating-btn:nth-child(1) { animation-delay: -0.5s; }
+    .floating-btn:nth-child(2) { animation-delay: -2s; }
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        25% { transform: translateY(-8px) rotate(1deg); }
+        50% { transform: translateY(-15px) rotate(0deg); }
+        75% { transform: translateY(-8px) rotate(-1deg); }
+    }
+    .zalo-btn:hover .w-16 {
+        box-shadow: 0 0 30px rgba(59, 130, 246, 0.8), 0 0 60px rgba(59, 130, 246, 0.4);
+    }
+    .phone-btn:hover .w-16 {
+        box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), 0 0 60px rgba(239, 68, 68, 0.4);
+    }
+
+    /* Modal animations */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+            transform: scale(1);
+        }
+        to {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+    }
+
+    /* Success modal styling */
+    #successModal {
+        backdrop-filter: blur(5px);
+    }
+
+    #successModal .bg-white {
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        animation: slideInUp 0.4s ease-out;
+    }
+
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    </style>
+
+    <!-- Load cart system -->
+    <script src="js/cart.js"></script>
+    <script src="js/user-cart-integration.js"></script>
+
+    <script>
+        // Real cart data from CartManager
+        let cartItems = [];
+        let customerInfo = null;
+
+        // Get current user ID for cart separation
+        function getCurrentUserId() {
+            try {
+                const user = localStorage.getItem('user') || localStorage.getItem('userData');
+                console.log('🔍 getUserId - raw user data:', user);
+                if (user) {
+                    const userData = JSON.parse(user);
+                    console.log('🔍 getUserId - parsed userData:', userData);
+                    const userId = userData.id || userData.email || null; // Không trả về 'guest'
+                    console.log('🔍 getUserId - final userId:', userId);
+                    return userId;
+                }
+                console.log('🔍 getUserId - no user data, returning null');
+                return null; // Không có user thì trả về null
+            } catch (error) {
+                console.error('Error getting current user ID:', error);
+                return null;
+            }
+        }
+
+        // Load real customer info from CartManager
+        function loadCustomerInfo() {
+            console.log('🔍 Loading customer info...');
+
+            // Get customer info from CartManager
+            if (window.cartManager) {
+                customerInfo = window.cartManager.customerInfo;
+                console.log('✅ Got customer info from CartManager:', customerInfo);
+                console.log('👤 Current user ID:', window.cartManager.currentUserId);
+            } else {
+                // Fallback to localStorage - try user-specific first
+                try {
+                    const currentUserId = getCurrentUserId();
+                    const customerInfoKey = `customerInfo_${currentUserId}`;
+                    customerInfo = JSON.parse(localStorage.getItem(customerInfoKey)) ||
+                                  JSON.parse(localStorage.getItem('customerInfo'));
+                    console.log('✅ Got customer info from localStorage:', customerInfo);
+                } catch (error) {
+                    console.warn('⚠️ Error loading customer info from localStorage:', error);
+                }
+            }
+
+            // Use customer info directly without API calls
+            if (customerInfo && customerInfo.id) {
+                updateUIWithCurrentCustomerInfo();
+            } else {
+                // Show default guest info
+                document.getElementById('customerName').textContent = 'Khách hàng';
+                document.getElementById('customerEmail').textContent = 'guest@restaurant.com';
+                document.getElementById('customerId').textContent = 'N/A';
+
+                // Set default customer info for payment
+                customerInfo = {
+                    id: 6, // Default to customer ID 6
+                    full_name: 'Nguyễn Huỳnh Kỳ Thuật Thuật',
+                    email: 'nguyenhuynhkithuat84tv@gmail.com',
+                    phone: '0123456789'
+                };
+
+                // Update UI with default customer info
+                updateUIWithCurrentCustomerInfo();
+            }
+        }
+
+
+
+        // Update UI with current customer info
+        function updateUIWithCurrentCustomerInfo() {
+            if (customerInfo) {
+                document.getElementById('customerName').textContent = customerInfo.full_name || customerInfo.name || 'N/A';
+                document.getElementById('customerEmail').textContent = customerInfo.email || 'N/A';
+                document.getElementById('customerId').textContent = customerInfo.id ? `#${customerInfo.id}` : 'N/A';
+            }
+        }
+
+        // Load real cart items from CartManager
+        function loadCartItems() {
+            console.log('🔍 Loading cart items...');
+
+            // Kiểm tra đăng nhập trước
+            const currentUserId = getCurrentUserId();
+            if (!currentUserId) {
+                console.log('❌ No user logged in, cannot load cart');
+                cartItems = [];
+                const cartContainer = document.getElementById('cartItems');
+                cartContainer.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-user-lock text-4xl mb-4"></i>
+                        <p>Vui lòng đăng nhập để xem giỏ hàng</p>
+                        <a href="Menu-new.html" class="text-red-600 hover:underline mt-2 inline-block">
+                            <i class="fas fa-arrow-left mr-1"></i> Quay lại thực đơn
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            console.log('🔍 Available localStorage keys:', Object.keys(localStorage));
+
+            // Debug all possible cart sources
+            const cartKey = `cart_${currentUserId}`;
+            console.log('🔍 Current user ID:', currentUserId);
+            console.log('🔍 Cart key:', cartKey);
+            console.log('🔍 localStorage cart_user:', localStorage.getItem(cartKey));
+            console.log('🔍 localStorage cart:', localStorage.getItem('cart'));
+
+            // Get cart data from CartManager
+            if (window.cartManager && window.cartManager.currentUserId) {
+                cartItems = window.cartManager.getCart();
+                console.log('✅ Got cart from CartManager:', cartItems);
+                console.log('👤 Cart for user:', window.cartManager.currentUserId);
+            } else {
+                // Fallback to localStorage - chỉ load cart của user đã đăng nhập
+                cartItems = JSON.parse(localStorage.getItem(cartKey)) || [];
+                console.log(`✅ Got cart from localStorage for user ${currentUserId}:`, cartItems);
+            }
+
+            console.log('🛒 Final cartItems:', cartItems);
+            console.log('🛒 cartItems length:', cartItems.length);
+
+            const cartContainer = document.getElementById('cartItems');
+            cartContainer.innerHTML = '';
+
+            if (cartItems.length === 0) {
+                cartContainer.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-shopping-cart text-4xl mb-4"></i>
+                        <p>Chưa có món ăn nào được chọn</p>
+                        <a href="Menu-new.html" class="text-red-600 hover:underline mt-2 inline-block">
+                            <i class="fas fa-arrow-left mr-1"></i> Quay lại thực đơn
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            cartItems.forEach(item => {
+                // Handle different data formats from cart
+                const itemName = item.ten_mon || item.name || 'Món ăn';
+                const itemPrice = item.gia || item.price || 0;
+                const itemQuantity = item.qty || item.quantity || item.so_luong || 1;
+                const itemImage = item.hinh_anh || item.image || 'img/no-image.png';
+                const itemId = item.id_mon || item.id || 'unknown';
+
+                console.log('📦 Processing item:', {itemName, itemPrice, itemQuantity, itemImage});
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0';
+                itemDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-gray-200 rounded mr-3 flex items-center justify-center overflow-hidden">
+                            <img src="${itemImage}" alt="${itemName}" class="w-full h-full object-cover"
+                                 onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\\'text-xs text-gray-500\\'>🍽️</span>'">
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">${itemName}</p>
+                            <p class="text-sm text-gray-600">Số lượng: ${itemQuantity}</p>
+                            <p class="text-sm text-blue-600">Đơn giá: ${itemPrice.toLocaleString('vi-VN')}đ</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-semibold text-lg text-red-600">${(itemPrice * itemQuantity).toLocaleString('vi-VN')}đ</p>
+                    </div>
+                `;
+                cartContainer.appendChild(itemDiv);
+            });
+        }
+
+        // Update totals with real cart data
+        function updateTotals() {
+            const selectedOrderType = document.querySelector('input[name="orderType"]:checked');
+            const deliveryFee = (selectedOrderType && selectedOrderType.value === 'giao_hang') ? 20000 : 0;
+
+            // Calculate subtotal from real cart items
+            const subtotal = cartItems.reduce((sum, item) => {
+                const itemPrice = item.gia || item.price || 0;
+                const itemQuantity = item.qty || item.quantity || item.so_luong || 1;
+                return sum + (itemPrice * itemQuantity);
+            }, 0);
+
+            const total = subtotal + deliveryFee;
+
+            document.getElementById('subtotal').textContent = `${subtotal.toLocaleString('vi-VN')}đ`;
+            document.getElementById('deliveryFee').textContent = `${deliveryFee.toLocaleString('vi-VN')}đ`;
+            document.getElementById('totalAmount').textContent = `${total.toLocaleString('vi-VN')}đ`;
+        }
+
+        // Handle order type change
+        document.querySelectorAll('input[name="orderType"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const deliverySection = document.getElementById('deliveryAddressSection');
+                if (this.value === 'giao_hang') {
+                    deliverySection.classList.remove('hidden');
+                } else {
+                    deliverySection.classList.add('hidden');
+                }
+                updateTotals();
+            });
+        });
+
+        // Convert file to base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // Handle form submission
+        document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            console.log('🔄 Form submission started');
+
+            const submitBtn = document.getElementById('submitOrderBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang xử lý...';
+
+            try {
+                // Debug cart state before checking
+                console.log('🔍 DEBUG submitPayment - cartItems:', cartItems);
+                console.log('🔍 DEBUG submitPayment - cartItems type:', typeof cartItems);
+                console.log('🔍 DEBUG submitPayment - cartItems length:', cartItems ? cartItems.length : 'undefined');
+                console.log('🔍 DEBUG submitPayment - cartItems is array:', Array.isArray(cartItems));
+
+                // Reload cart items to ensure we have latest data
+                loadCartItems();
+                console.log('🔍 DEBUG after reload - cartItems:', cartItems);
+                console.log('🔍 DEBUG after reload - cartItems length:', cartItems ? cartItems.length : 'undefined');
+
+                // Check if cart has items
+                if (!cartItems || cartItems.length === 0) {
+                    console.log('❌ Cart is empty, showing alert');
+                    alert('⚠️ Chưa có món ăn nào!\n\nVui lòng chọn món ăn từ thực đơn trước khi thanh toán.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-credit-card mr-2"></i>Xác Nhận Thanh Toán';
+                    return;
+                }
+
+                console.log('✅ Cart has items, proceeding with payment');
+
+                const formData = new FormData(this);
+                const orderType = formData.get('orderType');
+                const deliveryAddress = formData.get('deliveryAddress');
+                const orderNotes = formData.get('orderNotes');
+                const paymentMethod = formData.get('paymentMethod');
+
+                console.log('📋 Form data:', {
+                    orderType, deliveryAddress, orderNotes, paymentMethod,
+                    cartItemsCount: cartItems.length,
+                    customerInfo: customerInfo
+                });
+
+                // Check customer info
+                if (!customerInfo) {
+                    alert('⚠️ Không có thông tin khách hàng!\n\nVui lòng kiểm tra lại.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-credit-card mr-2"></i>Xác Nhận Thanh Toán';
+                    return;
+                }
+
+                // Handle transfer proof image
+                let transferProofImage = null;
+                const transferProofFile = document.getElementById('transferProof').files[0];
+
+                // Validate transfer proof for bank transfer
+                if (paymentMethod === 'bank_transfer') {
+                    if (!transferProofFile) {
+                        alert('⚠️ Vui lòng tải lên hình ảnh chuyển khoản!\n\nĐây là yêu cầu bắt buộc để xác nhận thanh toán.');
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-university mr-2"></i>Xác Nhận Đặt Hàng (Chuyển Khoản)';
+                        return;
+                    }
+
+                    try {
+                        transferProofImage = await fileToBase64(transferProofFile);
+                        console.log('✅ Transfer proof image converted to base64');
+                    } catch (error) {
+                        console.error('❌ Error converting image:', error);
+                        alert('Có lỗi khi xử lý hình ảnh. Vui lòng thử lại!');
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-university mr-2"></i>Xác Nhận Đặt Hàng (Chuyển Khoản)';
+                        return;
+                    }
+                }
+
+                // Calculate totals from real cart data
+                const subtotal = cartItems.reduce((sum, item) => {
+                    const itemPrice = item.gia || item.price || 0;
+                    const itemQuantity = item.qty || item.quantity || item.so_luong || 1;
+                    return sum + (itemPrice * itemQuantity);
+                }, 0);
+                const deliveryFee = orderType === 'giao_hang' ? 20000 : 0;
+                const total = subtotal + deliveryFee;
+
+                // Prepare cart items for invoice (normalize format)
+                const normalizedCartItems = cartItems.map(item => ({
+                    id_mon: item.id_mon || item.id,
+                    ten_mon: item.ten_mon || item.name,
+                    don_gia: item.gia || item.price,
+                    so_luong: item.qty || item.quantity || item.so_luong || 1,
+                    thanh_tien: (item.gia || item.price) * (item.qty || item.quantity || item.so_luong || 1),
+                    hinh_anh: item.hinh_anh || item.image || 'img/no-image.png'
+                }));
+
+                // Generate invoice ID
+                const invoiceId = 'inv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const invoiceNumber = `HD${String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}`;
+
+                // Create invoice data for local storage
+                const invoiceData = {
+                    invoice: {
+                        id_hoa_don: invoiceId,
+                        id_khach: customerInfo.id || 6,
+                        ngay_tao: new Date().toISOString(),
+                        loai_don: orderType,
+                        trang_thai: paymentMethod === 'bank_transfer' ? 'cho_duyet' : 'cho_xac_nhan',
+                        tong_tien: total,
+                        dia_chi_giao_hang: deliveryAddress || null,
+                        ghi_chu: orderNotes || null,
+                        payment_method: paymentMethod,
+                        payment_status: 'pending',
+                        transfer_proof: transferProofImage, // Lưu hình ảnh chuyển khoản
+                        customer_info: {
+                            full_name: customerInfo.full_name || customerInfo.name || 'Khách hàng',
+                            email: customerInfo.email || 'guest@restaurant.com',
+                            phone: customerInfo.phone || '0123456789'
+                        }
+                    },
+                    details: normalizedCartItems,
+                    timestamp: new Date().toISOString()
+                };
+
+                console.log('🚀 Creating invoice with data:', invoiceData);
+
+                // Lưu hóa đơn vào localStorage cho trang danh sách hóa đơn
+                let invoiceList = JSON.parse(localStorage.getItem('invoiceList')) || [];
+                invoiceList.unshift(invoiceData); // Thêm vào đầu danh sách
+                localStorage.setItem('invoiceList', JSON.stringify(invoiceList));
+
+                // Cũng lưu vào invoiceHistory để tương thích
+                let invoiceHistory = JSON.parse(localStorage.getItem('invoiceHistory')) || [];
+                const historyInvoice = {
+                    id: invoiceId,
+                    invoiceNumber: invoiceNumber,
+                    customerName: customerInfo.full_name || customerInfo.name || 'Khách hàng',
+                    customerEmail: customerInfo.email || 'guest@restaurant.com',
+                    customerPhone: customerInfo.phone || '0123456789',
+                    items: normalizedCartItems,
+                    total: total,
+                    orderType: orderType === 'giao_hang' ? 'delivery' : 'dine-in',
+                    status: paymentMethod === 'bank_transfer' ? 'pending-approval' : 'pending',
+                    payment_method: paymentMethod,
+                    payment_status: 'pending',
+                    createdAt: new Date().toISOString(),
+                    address: deliveryAddress || null,
+                    notes: orderNotes || null,
+                    transfer_proof: transferProofImage // Lưu hình ảnh chuyển khoản
+                };
+                invoiceHistory.unshift(historyInvoice);
+                localStorage.setItem('invoiceHistory', JSON.stringify(invoiceHistory));
+
+                console.log('✅ Invoice saved to localStorage:', {
+                    invoiceList: invoiceList.length,
+                    invoiceHistory: invoiceHistory.length,
+                    hasTransferProof: !!transferProofImage
+                });
+
+                // Lưu dữ liệu cho trang hóa đơn
+                const orderDataForInvoice = {
+                    id: invoiceId,
+                    invoiceNumber: invoiceNumber,
+                    items: normalizedCartItems,
+                    total: total,
+                    subtotal: subtotal,
+                    deliveryFee: deliveryFee,
+                    orderType: orderType,
+                    deliveryAddress: deliveryAddress,
+                    notes: orderNotes,
+                    paymentMethod: paymentMethod,
+                    paymentStatus: 'pending',
+                    status: paymentMethod === 'bank_transfer' ? 'pending-approval' : 'pending',
+                    createdAt: new Date().toISOString(),
+                    transfer_proof: transferProofImage,
+                    customerInfo: {
+                        full_name: customerInfo.full_name || customerInfo.name || 'Khách hàng',
+                        email: customerInfo.email || 'guest@restaurant.com',
+                        phone: customerInfo.phone || '0123456789'
+                    }
+                };
+
+                // Lưu dữ liệu cho trang hóa đơn
+                localStorage.setItem('currentOrder', JSON.stringify(orderDataForInvoice));
+                localStorage.setItem('checkoutCustomerInfo', JSON.stringify(customerInfo));
+
+                // Xóa giỏ hàng sau khi thanh toán thành công
+                const currentUserId = getCurrentUserId();
+                const cartKey = `cart_${currentUserId}`;
+
+                localStorage.removeItem(cartKey);
+                localStorage.removeItem('cart'); // Legacy cart
+                localStorage.removeItem('cartData');
+                localStorage.removeItem('userCart');
+
+                if (window.cartManager) {
+                    window.cartManager.clearCart();
+                }
+
+                console.log('✅ Order completed successfully!');
+
+                // Hiển thị modal cảm ơn
+                showSuccessModal(invoiceId);
+
+            } catch (error) {
+                console.error('❌ Payment error:', error);
+                alert('Có lỗi xảy ra khi thanh toán. Vui lòng thử lại!');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-credit-card mr-2"></i>Xác Nhận Thanh Toán';
+            }
+        });
+
+        // Show success modal
+        function showSuccessModal(invoiceId) {
+            const modal = document.getElementById('successModal');
+            const invoiceNumberEl = document.getElementById('invoiceNumber');
+
+            if (invoiceNumberEl) {
+                invoiceNumberEl.textContent = `#HD${String(invoiceId).padStart(6, '0')}`;
+            }
+
+            if (modal) {
+                modal.classList.remove('hidden');
+                // Add animation
+                modal.style.animation = 'fadeIn 0.3s ease-out';
+
+                // Bắt đầu countdown
+                startCountdown();
+            }
+        }
+
+        // Countdown timer
+        let countdownInterval;
+        function startCountdown() {
+            let timeLeft = 10;
+            const timerEl = document.getElementById('countdownTimer');
+
+            countdownInterval = setInterval(() => {
+                timeLeft--;
+                if (timerEl) {
+                    timerEl.textContent = timeLeft;
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    const modal = document.getElementById('successModal');
+                    if (!modal.classList.contains('hidden')) {
+                        console.log('🔄 Auto redirecting to menu after countdown');
+                        closeSuccessModal();
+                    }
+                }
+            }, 1000);
+        }
+
+        // Close success modal and redirect to menu
+        function closeSuccessModal() {
+            // Clear countdown timer
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+
+            const modal = document.getElementById('successModal');
+            if (modal) {
+                modal.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    // Chuyển hướng về trang menu sau khi thanh toán thành công
+                    console.log('🔄 Redirecting to menu after successful payment');
+                    window.location.href = 'Menu-new.html';
+                }, 300);
+            }
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('successModal');
+            if (e.target === modal) {
+                closeSuccessModal();
+            }
+        });
+
+        // Handle payment method change
+        function handlePaymentMethodChange() {
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+            const bankTransferSection = document.getElementById('bankTransferSection');
+            const submitBtn = document.getElementById('submitOrderBtn');
+            const transferProofInput = document.getElementById('transferProof');
+
+            if (paymentMethod === 'bank_transfer') {
+                bankTransferSection.classList.remove('hidden');
+                submitBtn.innerHTML = '<i class="fas fa-university mr-2"></i>Xác Nhận Đặt Hàng (Chuyển Khoản)';
+                transferProofInput.setAttribute('required', 'required');
+
+                // Update transfer content and amount
+                updateTransferInfo();
+            } else {
+                bankTransferSection.classList.add('hidden');
+                submitBtn.innerHTML = '<i class="fas fa-credit-card mr-2"></i>Xác Nhận Thanh Toán';
+                transferProofInput.removeAttribute('required');
+            }
+        }
+
+        // Calculate total amount
+        function calculateTotal() {
+            const selectedOrderType = document.querySelector('input[name="orderType"]:checked');
+            const deliveryFee = (selectedOrderType && selectedOrderType.value === 'giao_hang') ? 20000 : 0;
+
+            const subtotal = cartItems.reduce((sum, item) => {
+                const itemPrice = item.gia || item.price || 0;
+                const itemQuantity = item.qty || item.quantity || item.so_luong || 1;
+                return sum + (itemPrice * itemQuantity);
+            }, 0);
+
+            return subtotal + deliveryFee;
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return `${amount.toLocaleString('vi-VN')}đ`;
+        }
+
+        // Update transfer information
+        function updateTransferInfo() {
+            const transferContent = document.getElementById('transferContent');
+            const transferAmount = document.getElementById('transferAmount');
+
+            if (transferContent && customerInfo) {
+                const invoiceNumber = `HD${String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}`;
+                transferContent.textContent = `${invoiceNumber} - ${customerInfo.full_name || customerInfo.name || 'Khách hàng'}`;
+            }
+
+            if (transferAmount) {
+                const total = calculateTotal();
+                transferAmount.textContent = formatCurrency(total);
+            }
+        }
+
+        // Initialize with real data
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔍 Payment page initializing...');
+
+            // Kiểm tra đăng nhập trước tiên
+            const currentUserId = getCurrentUserId();
+            if (!currentUserId) {
+                console.log('❌ No user logged in, redirecting to menu');
+                alert('⚠️ Vui lòng đăng nhập để sử dụng chức năng thanh toán!');
+                window.location.href = 'Menu-new.html';
+                return;
+            }
+
+            console.log('✅ User logged in:', currentUserId);
+            console.log('🔍 CartManager available:', typeof CartManager !== 'undefined');
+
+            // Wait for CartManager to be available
+            if (typeof CartManager !== 'undefined') {
+                if (!window.cartManager) {
+                    window.cartManager = new CartManager();
+                    console.log('✅ CartManager initialized');
+                    console.log('✅ CartManager current user:', window.cartManager.currentUserId);
+                    console.log('✅ CartManager cart:', window.cartManager.getCart());
+                } else {
+                    console.log('✅ CartManager already exists');
+                    console.log('✅ Existing CartManager user:', window.cartManager.currentUserId);
+                    console.log('✅ Existing CartManager cart:', window.cartManager.getCart());
+                }
+            } else {
+                console.log('❌ CartManager not available, using localStorage fallback');
+            }
+
+            // Load real data
+            loadCustomerInfo();
+            loadCartItems();
+            updateTotals();
+
+            // Setup event listeners
+            setupEventListeners();
+
+            console.log('✅ Payment page initialized with real data');
+        });
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Payment method change
+            document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+                radio.addEventListener('change', handlePaymentMethodChange);
+            });
+
+            // Order type change
+            document.querySelectorAll('input[name="orderType"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const deliverySection = document.getElementById('deliveryAddressSection');
+                    if (this.value === 'giao_hang') {
+                        deliverySection.classList.remove('hidden');
+                    } else {
+                        deliverySection.classList.add('hidden');
+                    }
+                    updateTotals();
+
+                    // Update transfer amount if bank transfer is selected
+                    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+                    if (paymentMethod && paymentMethod.value === 'bank_transfer') {
+                        updateTransferInfo();
+                    }
+                });
+            });
+        }
+
+        // Debug function to reload cart
+        function debugReloadCart() {
+            console.log('🔄 Debug: Reloading cart...');
+            console.log('📋 Current localStorage keys:', Object.keys(localStorage));
+
+            // Check all possible cart keys
+            const currentUserId = getCurrentUserId();
+            const cartKey = `cart_${currentUserId}`;
+            console.log('🛒 User cart key:', cartKey);
+            console.log('🛒 User cart data:', localStorage.getItem(cartKey));
+            console.log('🛒 Legacy cart:', localStorage.getItem('cart'));
+            console.log('🛒 cartData:', localStorage.getItem('cartData'));
+            console.log('🛒 userCart:', localStorage.getItem('userCart'));
+
+            // Show all cart_* keys
+            console.log('🔍 All cart keys in localStorage:');
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('cart_')) {
+                    console.log(`  - ${key}: ${localStorage.getItem(key)}`);
+                }
+            }
+
+            // Force reinitialize CartManager
+            if (typeof CartManager !== 'undefined') {
+                window.cartManager = new CartManager();
+                console.log('🔄 CartManager reinitialized');
+                console.log('🔄 CartManager user ID:', window.cartManager.currentUserId);
+                console.log('🔄 New cart data:', window.cartManager.getCart());
+                console.log('🔄 Cart length:', window.cartManager.getCart().length);
+            }
+
+            // Reload cart data
+            loadCartItems();
+            updateTotals();
+        }
+
+        // Debug function to show all user carts
+        function debugShowAllCarts() {
+            console.log('👥 Debug: Showing all user carts...');
+
+            const allCarts = {};
+
+            // Find all cart_* keys
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('cart_')) {
+                    const userId = key.replace('cart_', '');
+                    // Bỏ qua cart của guest
+                    if (userId === 'guest' || userId === 'null') {
+                        console.log(`🗑️ Skipping guest/null cart: ${key}`);
+                        continue;
+                    }
+
+                    try {
+                        const cartData = JSON.parse(localStorage.getItem(key));
+                        allCarts[userId] = {
+                            items: cartData,
+                            count: cartData.length,
+                            key: key
+                        };
+                        console.log(`👤 User ${userId}: ${cartData.length} items`);
+                        console.log(`   Cart data:`, cartData);
+                    } catch (error) {
+                        console.error(`❌ Error parsing cart for user ${userId}:`, error);
+                    }
+                }
+            }
+
+            console.log('📊 All user carts summary:', allCarts);
+
+            // Show current user info
+            const currentUserId = getCurrentUserId();
+            console.log(`🔍 Current user: ${currentUserId}`);
+            console.log(`🛒 Current user cart: ${allCarts[currentUserId] ? allCarts[currentUserId].count : 0} items`);
+
+            return allCarts;
+        }
+
+        // Function to clean up guest carts
+        function cleanupGuestCarts() {
+            console.log('🧹 Cleaning up guest carts...');
+            const keysToRemove = [];
+
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key === 'cart_guest' || key === 'cart_null' || key === 'cart_undefined')) {
+                    keysToRemove.push(key);
+                }
+            }
+
+            keysToRemove.forEach(key => {
+                localStorage.removeItem(key);
+                console.log(`🗑️ Removed ${key}`);
+            });
+
+            console.log(`✅ Cleaned up ${keysToRemove.length} guest cart entries`);
+        }
+    </script>
+</body>
+</html>
