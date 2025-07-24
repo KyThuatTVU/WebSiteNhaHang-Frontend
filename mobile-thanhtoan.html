@@ -147,6 +147,10 @@
 
     <!-- JavaScript -->
     <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/cart-integration.js"></script>
+    <script src="js/menu-api.js"></script>
     <script src="js/mobile-utils.js"></script>
     
     
@@ -167,20 +171,187 @@
         });
 
         function initializeMobileFeatures() {
+            // Initialize payment system
+            initializePaymentSystem();
+
+            // Load cart data
+            loadCartData();
+
+            // Setup payment methods
+            setupPaymentMethods();
+
             // Add pull-to-refresh (if needed)
             if ('false' === 'true') {
                 enablePullToRefresh();
             }
-            
+
             // Add swipe gestures (if needed)
             if ('false' === 'true') {
                 enableSwipeGestures();
             }
-            
+
             // Add offline support (if needed)
             if ('false' === 'true') {
                 enableOfflineSupport();
             }
+        }
+
+        function initializePaymentSystem() {
+            console.log('🔧 Initializing mobile payment system...');
+
+            // Check if user is authenticated
+            if (window.authManager && !window.authManager.isAuthenticated) {
+                showToast('Vui lòng đăng nhập để thanh toán', 'warning');
+                setTimeout(() => {
+                    window.location.href = 'mobile-Index-new.html';
+                }, 2000);
+                return;
+            }
+
+            // Initialize cart manager
+            if (!window.cartManager && window.CartManager) {
+                window.cartManager = new CartManager();
+            }
+        }
+
+        function loadCartData() {
+            console.log('📦 Loading cart data for payment...');
+
+            if (window.cartManager) {
+                const cartItems = window.cartManager.getItems();
+                const total = window.cartManager.getTotal();
+
+                console.log('Cart items:', cartItems);
+                console.log('Total:', total);
+
+                if (cartItems.length === 0) {
+                    showToast('Giỏ hàng trống. Vui lòng thêm món ăn trước khi thanh toán.', 'warning');
+                    setTimeout(() => {
+                        window.location.href = 'mobile-Menu-new.html';
+                    }, 2000);
+                    return;
+                }
+
+                renderCartItems(cartItems, total);
+            } else {
+                console.error('❌ Cart manager not available');
+                showToast('Không thể tải dữ liệu giỏ hàng', 'error');
+            }
+        }
+
+        function renderCartItems(items, total) {
+            // This would render cart items in the payment page
+            // Implementation depends on your HTML structure
+            console.log('🎨 Rendering cart items for payment:', items);
+            showToast(`Đã tải ${items.length} món ăn. Tổng: ${formatPrice(total)}`, 'success');
+        }
+
+        function setupPaymentMethods() {
+            console.log('💳 Setting up payment methods...');
+
+            // Setup payment method selection
+            const paymentMethods = document.querySelectorAll('input[name="paymentMethod"]');
+            paymentMethods.forEach(method => {
+                method.addEventListener('change', function() {
+                    console.log('Payment method selected:', this.value);
+                    showToast(`Đã chọn phương thức: ${this.value}`, 'info');
+                });
+            });
+
+            // Setup payment button
+            const paymentButton = document.getElementById('processPayment');
+            if (paymentButton) {
+                paymentButton.addEventListener('click', processPayment);
+            }
+        }
+
+        async function processPayment() {
+            console.log('💰 Processing payment...');
+
+            try {
+                // Show loading
+                showToast('Đang xử lý thanh toán...', 'info');
+
+                // Get cart data
+                const cartItems = window.cartManager ? window.cartManager.getItems() : [];
+                const total = window.cartManager ? window.cartManager.getTotal() : 0;
+
+                if (cartItems.length === 0) {
+                    throw new Error('Giỏ hàng trống');
+                }
+
+                // Get payment method
+                const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+                if (!paymentMethod) {
+                    throw new Error('Vui lòng chọn phương thức thanh toán');
+                }
+
+                // Get customer info
+                const user = window.authManager ? window.authManager.user : null;
+                if (!user) {
+                    throw new Error('Thông tin khách hàng không hợp lệ');
+                }
+
+                // Prepare payment data
+                const paymentData = {
+                    items: cartItems,
+                    total: total,
+                    paymentMethod: paymentMethod.value,
+                    customer: {
+                        id: user.id_khach_hang || user.id,
+                        name: user.full_name || user.name,
+                        email: user.email,
+                        phone: user.phone
+                    }
+                };
+
+                console.log('Payment data:', paymentData);
+
+                // Call payment API
+                const response = await fetch(`${window.API_BASE_URL}/orders`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${window.authManager.token}`
+                    },
+                    body: JSON.stringify(paymentData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Clear cart
+                    if (window.cartManager) {
+                        window.cartManager.clearCart();
+                    }
+
+                    showToast('Thanh toán thành công!', 'success');
+                    vibrate([100, 50, 100]);
+
+                    // Redirect to success page or order history
+                    setTimeout(() => {
+                        window.location.href = 'mobile-DanhSachHoaDon.html';
+                    }, 2000);
+                } else {
+                    throw new Error(result.message || 'Thanh toán thất bại');
+                }
+
+            } catch (error) {
+                console.error('❌ Payment error:', error);
+                showToast(`Lỗi thanh toán: ${error.message}`, 'error');
+                vibrate([200]);
+            }
+        }
+
+        function formatPrice(price) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(price);
         }
 
         function updateMobileUserInfo() {

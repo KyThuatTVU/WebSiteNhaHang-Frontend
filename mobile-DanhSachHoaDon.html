@@ -149,7 +149,9 @@
     </div>
 
     <!-- JavaScript -->
-    <script src="../js/mobile-utils.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/mobile-utils.js"></script>
     
     
     <script>
@@ -169,19 +171,347 @@
         });
 
         function initializeMobileFeatures() {
+            // Initialize orders system
+            initializeOrdersSystem();
+
+            // Load orders
+            loadOrders();
+
             // Add pull-to-refresh (if needed)
             if ('true' === 'true') {
                 enablePullToRefresh();
             }
-            
+
             // Add swipe gestures (if needed)
             if ('false' === 'true') {
                 enableSwipeGestures();
             }
-            
+
             // Add offline support (if needed)
             if ('false' === 'true') {
                 enableOfflineSupport();
+            }
+        }
+
+        function initializeOrdersSystem() {
+            console.log('🔧 Initializing mobile orders system...');
+
+            // Check if user is authenticated
+            if (window.authManager && !window.authManager.isAuthenticated) {
+                showToast('Vui lòng đăng nhập để xem danh sách hóa đơn', 'warning');
+                setTimeout(() => {
+                    window.location.href = 'mobile-Index-new.html';
+                }, 2000);
+                return;
+            }
+
+            // Setup refresh button
+            const refreshButton = document.getElementById('refreshOrders');
+            if (refreshButton) {
+                refreshButton.addEventListener('click', () => {
+                    loadOrders();
+                    showToast('Đang làm mới danh sách...', 'info');
+                });
+            }
+        }
+
+        async function loadOrders() {
+            console.log('🧾 Loading orders...');
+
+            try {
+                // Show loading
+                showToast('Đang tải danh sách hóa đơn...', 'info');
+
+                // Get user info
+                const user = window.authManager ? window.authManager.user : null;
+                if (!user) {
+                    throw new Error('Thông tin người dùng không hợp lệ');
+                }
+
+                // Call API to get orders
+                const response = await fetch(`${window.API_BASE_URL}/orders/khach_hang/${user.id_khach_hang || user.id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${window.authManager.token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    console.log('✅ Orders loaded:', result.data.length, 'items');
+                    renderOrders(result.data);
+                    showToast(`Đã tải ${result.data.length} hóa đơn`, 'success');
+                } else {
+                    throw new Error(result.message || 'Không thể tải danh sách hóa đơn');
+                }
+
+            } catch (error) {
+                console.error('❌ Error loading orders:', error);
+                showToast(`Lỗi: ${error.message}`, 'error');
+
+                // Show fallback data
+                renderOrders([]);
+            }
+        }
+
+        function renderOrders(orders) {
+            const container = document.getElementById('ordersContainer');
+            if (!container) {
+                console.error('❌ Orders container not found');
+                return;
+            }
+
+            container.innerHTML = '';
+
+            if (orders.length === 0) {
+                container.innerHTML = `
+                    <div class="mobile-card mobile-text-center mobile-p-lg">
+                        <i class="fas fa-receipt mobile-text-4xl mobile-text-gray-400 mobile-mb-md"></i>
+                        <h3 class="mobile-text-lg mobile-font-semibold mobile-mb-sm">Chưa có hóa đơn nào</h3>
+                        <p class="mobile-text-gray-600 mobile-mb-md">Bạn chưa có đơn hàng nào. Hãy đặt món ngay!</p>
+                        <button class="mobile-btn mobile-btn-primary" onclick="window.location.href='mobile-Menu-new.html'">
+                            <i class="fas fa-utensils mobile-mr-sm"></i>
+                            Đặt món ngay
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            orders.forEach((order, index) => {
+                const orderElement = document.createElement('div');
+                orderElement.className = 'mobile-card mobile-mb-md mobile-transition';
+                orderElement.style.animationDelay = `${index * 0.1}s`;
+
+                const status = getOrderStatus(order.trang_thai || order.status);
+                const statusClass = getOrderStatusClass(order.trang_thai || order.status);
+                const total = order.tong_tien || order.total || 0;
+
+                orderElement.innerHTML = `
+                    <div class="mobile-flex mobile-justify-between mobile-items-start mobile-mb-sm">
+                        <div class="mobile-flex-1">
+                            <h4 class="mobile-font-semibold mobile-text-lg mobile-mb-xs">
+                                Hóa đơn #${order.id_hoa_don || order.id || 'N/A'}
+                            </h4>
+                            <p class="mobile-text-gray-600 mobile-text-sm mobile-mb-xs">
+                                <i class="fas fa-calendar mobile-mr-xs"></i>
+                                ${formatDateTime(order.ngay_tao || order.created_at)}
+                            </p>
+                            <p class="mobile-text-primary mobile-font-semibold mobile-text-lg">
+                                <i class="fas fa-money-bill-wave mobile-mr-xs"></i>
+                                ${formatPrice(total)}
+                            </p>
+                        </div>
+                        <span class="mobile-badge ${statusClass}">${status}</span>
+                    </div>
+
+                    ${order.ghi_chu || order.note ? `
+                        <div class="mobile-bg-gray-50 mobile-p-sm mobile-rounded mobile-mb-sm">
+                            <p class="mobile-text-sm mobile-text-gray-700">
+                                <i class="fas fa-sticky-note mobile-mr-xs"></i>
+                                ${order.ghi_chu || order.note}
+                            </p>
+                        </div>
+                    ` : ''}
+
+                    <div class="mobile-flex mobile-justify-between mobile-items-center mobile-mt-sm">
+                        <small class="mobile-text-gray-500">
+                            ${getOrderItemsCount(order)} món
+                        </small>
+                        <div class="mobile-flex mobile-gap-sm">
+                            <button class="mobile-btn mobile-btn-sm mobile-btn-outline-primary"
+                                    onclick="viewOrderDetails('${order.id_hoa_don || order.id}')">
+                                <i class="fas fa-eye mobile-mr-xs"></i>
+                                Chi tiết
+                            </button>
+                            ${(order.trang_thai === 'completed' || order.status === 'completed') ? `
+                                <button class="mobile-btn mobile-btn-sm mobile-btn-outline-success"
+                                        onclick="reorderItems('${order.id_hoa_don || order.id}')">
+                                    <i class="fas fa-redo mobile-mr-xs"></i>
+                                    Đặt lại
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(orderElement);
+            });
+        }
+
+        function getOrderStatus(status) {
+            const statusMap = {
+                'pending': 'Chờ xử lý',
+                'confirmed': 'Đã xác nhận',
+                'preparing': 'Đang chuẩn bị',
+                'ready': 'Sẵn sàng',
+                'completed': 'Hoàn thành',
+                'cancelled': 'Đã hủy'
+            };
+            return statusMap[status] || status;
+        }
+
+        function getOrderStatusClass(status) {
+            const classMap = {
+                'pending': 'mobile-badge-warning',
+                'confirmed': 'mobile-badge-info',
+                'preparing': 'mobile-badge-primary',
+                'ready': 'mobile-badge-success',
+                'completed': 'mobile-badge-success',
+                'cancelled': 'mobile-badge-error'
+            };
+            return classMap[status] || 'mobile-badge-secondary';
+        }
+
+        function getOrderItemsCount(order) {
+            if (order.chi_tiet && Array.isArray(order.chi_tiet)) {
+                return order.chi_tiet.length;
+            }
+            if (order.items && Array.isArray(order.items)) {
+                return order.items.length;
+            }
+            return 0;
+        }
+
+        function formatPrice(price) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(price);
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleString('vi-VN');
+        }
+
+        async function viewOrderDetails(orderId) {
+            try {
+                showToast('Đang tải chi tiết hóa đơn...', 'info');
+
+                const response = await fetch(`${window.API_BASE_URL}/orders/${orderId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${window.authManager.token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    showOrderDetailsModal(result.data);
+                } else {
+                    throw new Error(result.message || 'Không thể tải chi tiết hóa đơn');
+                }
+
+            } catch (error) {
+                console.error('❌ Error loading order details:', error);
+                showToast(`Lỗi: ${error.message}`, 'error');
+            }
+        }
+
+        function showOrderDetailsModal(order) {
+            const items = order.chi_tiet || order.items || [];
+            const itemsHtml = items.map(item => `
+                <div class="mobile-flex mobile-justify-between mobile-items-center mobile-py-sm mobile-border-b">
+                    <div class="mobile-flex-1">
+                        <h5 class="mobile-font-medium">${item.ten_mon || item.name}</h5>
+                        <p class="mobile-text-sm mobile-text-gray-600">SL: ${item.so_luong || item.quantity}</p>
+                    </div>
+                    <span class="mobile-font-semibold">${formatPrice((item.gia || item.price) * (item.so_luong || item.quantity))}</span>
+                </div>
+            `).join('');
+
+            const modalContent = `
+                <div class="mobile-modal-header">
+                    <h3 class="mobile-text-lg mobile-font-semibold">Chi tiết hóa đơn #${order.id_hoa_don || order.id}</h3>
+                    <button class="mobile-btn-icon" onclick="closeModal(this.closest('.mobile-modal'))">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="mobile-modal-body">
+                    <div class="mobile-mb-md">
+                        <p><strong>Ngày:</strong> ${formatDateTime(order.ngay_tao || order.created_at)}</p>
+                        <p><strong>Trạng thái:</strong> <span class="mobile-badge ${getOrderStatusClass(order.trang_thai || order.status)}">${getOrderStatus(order.trang_thai || order.status)}</span></p>
+                    </div>
+
+                    <h4 class="mobile-font-semibold mobile-mb-sm">Món đã đặt:</h4>
+                    <div class="mobile-mb-md">
+                        ${itemsHtml}
+                    </div>
+
+                    <div class="mobile-flex mobile-justify-between mobile-items-center mobile-pt-md mobile-border-t mobile-font-semibold mobile-text-lg">
+                        <span>Tổng cộng:</span>
+                        <span class="mobile-text-primary">${formatPrice(order.tong_tien || order.total)}</span>
+                    </div>
+                </div>
+            `;
+
+            showModal(modalContent);
+        }
+
+        async function reorderItems(orderId) {
+            try {
+                showToast('Đang thêm món vào giỏ hàng...', 'info');
+
+                const response = await fetch(`${window.API_BASE_URL}/orders/${orderId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${window.authManager.token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    const items = result.data.chi_tiet || result.data.items || [];
+
+                    if (window.cartManager) {
+                        items.forEach(item => {
+                            const cartItem = {
+                                id: item.id_mon || item.id,
+                                name: item.ten_mon || item.name,
+                                price: item.gia || item.price,
+                                quantity: item.so_luong || item.quantity
+                            };
+                            window.cartManager.addItem(cartItem, cartItem.quantity);
+                        });
+
+                        showToast(`Đã thêm ${items.length} món vào giỏ hàng!`, 'success');
+                        vibrate([100, 50, 100]);
+
+                        // Navigate to cart or menu
+                        setTimeout(() => {
+                            window.location.href = 'mobile-thanhtoan.html';
+                        }, 1500);
+                    } else {
+                        throw new Error('Giỏ hàng không khả dụng');
+                    }
+                } else {
+                    throw new Error(result.message || 'Không thể tải thông tin đơn hàng');
+                }
+
+            } catch (error) {
+                console.error('❌ Error reordering items:', error);
+                showToast(`Lỗi: ${error.message}`, 'error');
+                vibrate([200]);
             }
         }
 

@@ -118,7 +118,10 @@
     </div>
 
     <!-- JavaScript -->
-    <script src="../js/mobile-utils.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin-auth.js"></script>
+    <script src="js/mobile-utils.js"></script>
     
     
     <script>
@@ -138,19 +141,177 @@
         });
 
         function initializeMobileFeatures() {
+            // Initialize admin login system
+            initializeAdminLogin();
+
+            // Check if already logged in
+            checkExistingLogin();
+
             // Add pull-to-refresh (if needed)
             if ('false' === 'true') {
                 enablePullToRefresh();
             }
-            
+
             // Add swipe gestures (if needed)
             if ('false' === 'true') {
                 enableSwipeGestures();
             }
-            
+
             // Add offline support (if needed)
             if ('false' === 'true') {
                 enableOfflineSupport();
+            }
+        }
+
+        function initializeAdminLogin() {
+            console.log('🔧 Initializing mobile admin login system...');
+
+            // Setup login form
+            const loginForm = document.getElementById('adminLoginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleAdminLogin);
+            }
+
+            // Setup login button
+            const loginButton = document.getElementById('adminLoginButton');
+            if (loginButton) {
+                loginButton.addEventListener('click', handleAdminLogin);
+            }
+
+            // Setup password visibility toggle
+            const passwordToggle = document.getElementById('passwordToggle');
+            const passwordInput = document.getElementById('adminPassword');
+            if (passwordToggle && passwordInput) {
+                passwordToggle.addEventListener('click', () => {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    passwordToggle.innerHTML = type === 'password' ?
+                        '<i class="fas fa-eye"></i>' :
+                        '<i class="fas fa-eye-slash"></i>';
+                });
+            }
+        }
+
+        function checkExistingLogin() {
+            // Check if admin is already logged in
+            if (window.authManager && window.authManager.isAuthenticated) {
+                const user = window.authManager.user;
+                if (user && (user.role === 'admin' || user.role === 'staff')) {
+                    showToast('Bạn đã đăng nhập rồi', 'info');
+                    setTimeout(() => {
+                        redirectAfterLogin();
+                    }, 1000);
+                }
+            }
+        }
+
+        async function handleAdminLogin(event) {
+            if (event) {
+                event.preventDefault();
+            }
+
+            console.log('🔐 Handling admin login...');
+
+            try {
+                // Get form data
+                const email = document.getElementById('adminEmail')?.value?.trim();
+                const password = document.getElementById('adminPassword')?.value;
+
+                if (!email || !password) {
+                    throw new Error('Vui lòng nhập đầy đủ email và mật khẩu');
+                }
+
+                // Validate email format
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    throw new Error('Email không hợp lệ');
+                }
+
+                // Show loading
+                showToast('Đang đăng nhập...', 'info');
+                setLoginButtonLoading(true);
+
+                // Call admin login API
+                const response = await fetch(`${window.API_BASE_URL}/admin/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success && result.admin) {
+                    // Save admin data
+                    if (window.authManager) {
+                        window.authManager.saveUserData(result.admin, result.token, result.refreshToken, result.tokenExpiry);
+                        window.authManager.isAuthenticated = true;
+                        window.authManager.user = result.admin;
+                        window.authManager.token = result.token;
+                    } else {
+                        // Fallback storage
+                        localStorage.setItem('adminUser', JSON.stringify(result.admin));
+                        localStorage.setItem('adminToken', result.token);
+                    }
+
+                    showToast('Đăng nhập thành công!', 'success');
+                    vibrate([100, 50, 100]);
+
+                    // Redirect after successful login
+                    setTimeout(() => {
+                        redirectAfterLogin();
+                    }, 1500);
+
+                } else {
+                    throw new Error(result.message || 'Đăng nhập thất bại');
+                }
+
+            } catch (error) {
+                console.error('❌ Admin login error:', error);
+                showToast(`Lỗi đăng nhập: ${error.message}`, 'error');
+                vibrate([200]);
+            } finally {
+                setLoginButtonLoading(false);
+            }
+        }
+
+        function setLoginButtonLoading(loading) {
+            const button = document.getElementById('adminLoginButton');
+            if (!button) return;
+
+            if (loading) {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mobile-mr-sm"></i>Đang đăng nhập...';
+            } else {
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-sign-in-alt mobile-mr-sm"></i>Đăng nhập';
+            }
+        }
+
+        function redirectAfterLogin() {
+            // Check for redirect target
+            const redirectTo = localStorage.getItem('redirectAfterLogin');
+
+            if (redirectTo) {
+                localStorage.removeItem('redirectAfterLogin');
+                window.location.href = redirectTo;
+            } else {
+                // Default redirect to admin dashboard or main page
+                window.location.href = 'mobile-DanhSachDatBan.html';
+            }
+        }
+
+        // Utility function to go back
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = 'mobile-Index-new.html';
             }
         }
 
